@@ -1,0 +1,3692 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GoldSignal TH · เช็คราคาทองคำไทย Real-time + วิเคราะห์สัญญาณซื้อขาย</title>
+<meta name="description" content="แดชบอร์ดราคาทองคำสมาคมค้าทองคำไทย พร้อม SMA / RSI / แนวรับ-แนวต้าน เป้าหมายราคา และเครื่องคำนวณกำไรส่วนตัว" />
+<link rel="icon" type="image/jpeg" href="icon/cffe1b4e-295c-4447-ae79-80cbbc3f07e9.jpg" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@500;600;700&family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          gold: { DEFAULT: '#D4AF37', light: '#F2D06B', dark: '#8A6E1F', deep: '#5C4813' },
+          ink:  { 900: '#070a0f', 800: '#0b1017', 700: '#0f151e', 600: '#151d28' }
+        },
+        fontFamily: {
+          sans: ['"Noto Sans Thai"', 'Inter', 'system-ui', 'sans-serif'],
+          display: ['Kanit', '"Noto Sans Thai"', 'sans-serif']
+        },
+        boxShadow: { glow: '0 0 0 1px rgba(212,175,55,.35), 0 8px 40px -12px rgba(212,175,55,.35)' }
+      }
+    }
+  };
+</script>
+<style>
+  :root { color-scheme: dark; }
+  html { scroll-behavior: smooth; }
+  body { background:
+      radial-gradient(1100px 520px at 12% -8%, rgba(212,175,55,.10), transparent 60%),
+      radial-gradient(900px 480px at 92% 4%, rgba(56,189,248,.08), transparent 60%),
+      #070a0f; }
+  .card { border-radius: 1rem; border: 1px solid rgba(255,255,255,.06);
+          background: linear-gradient(180deg, rgba(21,29,40,.85), rgba(11,16,23,.9));
+          backdrop-filter: blur(8px); }
+  .card-gold { border-color: rgba(212,175,55,.22); }
+  .num { font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+  .divider { height:1px; background: linear-gradient(90deg, transparent, rgba(212,175,55,.35), transparent); }
+  .pulse-dot { position: relative; }
+  .pulse-dot::after { content:''; position:absolute; inset:0; border-radius:9999px;
+      background: inherit; animation: ping 1.8s cubic-bezier(0,0,.2,1) infinite; opacity:.6; }
+  @keyframes ping { 75%,100% { transform: scale(2.2); opacity: 0; } }
+  ::-webkit-scrollbar { width: 9px; height: 9px; }
+  ::-webkit-scrollbar-track { background: #0b1017; }
+  ::-webkit-scrollbar-thumb { background: #26313f; border-radius: 9px; }
+  ::-webkit-scrollbar-thumb:hover { background: #3a4757; }
+  input[type=number]::-webkit-outer-spin-button,
+  input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type=number] { appearance: textfield; -moz-appearance: textfield; }
+  .fade-in { animation: fadeIn .45s ease both; }
+  @keyframes fadeIn { from { opacity:0; transform: translateY(6px);} to {opacity:1; transform:none;} }
+  .flash-up { animation: flashUp .8s ease; }
+  .flash-down { animation: flashDown .8s ease; }
+  @keyframes flashUp { 0%{ background-color: rgba(34,197,94,.28);} 100%{ background-color: transparent;} }
+  @keyframes flashDown { 0%{ background-color: rgba(244,63,94,.28);} 100%{ background-color: transparent;} }
+</style>
+</head>
+<body class="min-h-screen font-sans text-slate-200 antialiased">
+
+<!-- พื้นที่แสดงการแจ้งเตือนทันทีบนหน้าจอ -->
+<div id="toastHost" class="pointer-events-none fixed right-3 top-3 z-50 flex w-[min(92vw,23rem)] flex-col gap-2 sm:right-4 sm:top-4"></div>
+
+<div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:py-8">
+
+  <!-- ================= HEADER ================= -->
+  <header class="mb-6">
+    <div class="card card-gold p-5 sm:p-6">
+      <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div class="flex items-start gap-4">
+          <img src="icon/cffe1b4e-295c-4447-ae79-80cbbc3f07e9.jpg" alt="GoldSignal TH" class="h-12 w-12 shrink-0 rounded-xl object-cover object-[center_32%] shadow-glow ring-1 ring-gold/40" />
+          <div>
+            <h1 class="font-display text-xl font-semibold tracking-tight text-white sm:text-2xl">
+              GoldSignal <span class="text-gold">TH</span>
+            </h1>
+            <p class="mt-0.5 text-xs text-slate-400 sm:text-sm">
+              ราคาทองคำสมาคมค้าทองคำแห่งประเทศไทย · วิเคราะห์สัญญาณซื้อ/ขาย · เป้าหมายราคาล่วงหน้า
+            </p>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="flex items-center gap-2 rounded-xl border border-white/5 bg-ink-900/60 px-3 py-2">
+            <span id="sourceDot" class="pulse-dot h-2.5 w-2.5 rounded-full bg-amber-400"></span>
+            <div class="leading-tight">
+              <div id="sourceLabel" class="text-[11px] font-medium text-slate-300">กำลังเชื่อมต่อ…</div>
+              <div id="lastUpdated" class="text-[11px] text-slate-500 num">อัปเดตล่าสุด —</div>
+              <div id="announcementInfo" class="text-[10px] text-gold-light">ประกาศสมาคม —</div>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 rounded-xl border border-white/5 bg-ink-900/60 px-3 py-2">
+            <label class="flex cursor-pointer items-center gap-2 text-[11px] text-slate-300">
+              <input id="autoRefreshToggle" type="checkbox" checked class="peer sr-only" />
+              <span class="relative h-4 w-8 rounded-full bg-slate-700 transition peer-checked:bg-emerald-500/70 after:absolute after:left-0.5 after:top-0.5 after:h-3 after:w-3 after:rounded-full after:bg-white after:transition peer-checked:after:translate-x-4"></span>
+              Auto 60s
+            </label>
+            <span id="countdown" class="rounded-md bg-white/5 px-1.5 py-0.5 text-[11px] text-slate-400 num">60</span>
+          </div>
+
+          <button id="refreshBtn" class="group inline-flex items-center gap-2 rounded-xl bg-gradient-to-b from-gold-light to-gold px-4 py-2.5 text-sm font-semibold text-ink-900 shadow-glow transition hover:brightness-110 active:scale-[.98] disabled:opacity-60">
+            <svg id="refreshIcon" class="h-4 w-4 transition-transform group-hover:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+            <span id="refreshLabel">รีเฟรช</span>
+          </button>
+        </div>
+      </div>
+
+      <div id="statusBanner" class="mt-4 hidden rounded-xl border px-4 py-2.5 text-xs"></div>
+    </div>
+  </header>
+
+  <!-- ================= PRICE CARDS ================= -->
+  <section class="mb-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+    <div id="cardBarBuy" class="card p-4">
+      <div class="flex items-center justify-between">
+        <span class="text-[11px] font-medium uppercase tracking-wide text-slate-400">ทองแท่ง · รับซื้อ</span>
+        <span class="h-2 w-2 rounded-full bg-emerald-400/80"></span>
+      </div>
+      <div class="mt-2 flex items-end gap-1.5">
+        <span id="barBuy" class="num font-display text-2xl font-semibold text-emerald-400 sm:text-3xl">--</span>
+        <span class="pb-1 text-[10px] text-slate-500">บาท</span>
+      </div>
+      <div id="barBuyDelta" class="mt-1.5 text-[11px] text-slate-500 num">—</div>
+    </div>
+
+    <div id="cardBarSell" class="card p-4">
+      <div class="flex items-center justify-between">
+        <span class="text-[11px] font-medium uppercase tracking-wide text-slate-400">ทองแท่ง · ขายออก</span>
+        <span class="h-2 w-2 rounded-full bg-gold"></span>
+      </div>
+      <div class="mt-2 flex items-end gap-1.5">
+        <span id="barSell" class="num font-display text-2xl font-semibold text-gold sm:text-3xl">--</span>
+        <span class="pb-1 text-[10px] text-slate-500">บาท</span>
+      </div>
+      <div id="barSellDelta" class="mt-1.5 text-[11px] text-slate-500 num">—</div>
+    </div>
+
+    <div id="cardOrnBuy" class="card p-4">
+      <div class="flex items-center justify-between">
+        <span class="text-[11px] font-medium uppercase tracking-wide text-slate-400">รูปพรรณ · รับซื้อ</span>
+        <span class="h-2 w-2 rounded-full bg-rose-400/80"></span>
+      </div>
+      <div class="mt-2 flex items-end gap-1.5">
+        <span id="ornBuy" class="num font-display text-2xl font-semibold text-rose-300 sm:text-3xl">--</span>
+        <span class="pb-1 text-[10px] text-slate-500">บาท</span>
+      </div>
+      <div id="ornBuyDelta" class="mt-1.5 text-[11px] text-slate-500 num">—</div>
+    </div>
+
+    <div id="cardOrnSell" class="card p-4">
+      <div class="flex items-center justify-between">
+        <span class="text-[11px] font-medium uppercase tracking-wide text-slate-400">รูปพรรณ · ขายออก</span>
+        <span class="h-2 w-2 rounded-full bg-sky-400/80"></span>
+      </div>
+      <div class="mt-2 flex items-end gap-1.5">
+        <span id="ornSell" class="num font-display text-2xl font-semibold text-sky-300 sm:text-3xl">--</span>
+        <span class="pb-1 text-[10px] text-slate-500">บาท</span>
+      </div>
+      <div id="ornSellDelta" class="mt-1.5 text-[11px] text-slate-500 num">—</div>
+    </div>
+  </section>
+
+  <section class="mb-6" aria-labelledby="ylgReferenceTitle">
+    <div class="card flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div class="min-w-0">
+        <div class="flex flex-wrap items-center gap-2">
+          <h2 id="ylgReferenceTitle" class="font-display text-sm font-semibold text-white">ราคาเทียบ YLG Bullion · ทองแท่ง 96.5%</h2>
+          <a href="https://www.ylgbullion.co.th/" target="_blank" rel="noopener noreferrer" class="text-[10px] text-sky-300 underline decoration-sky-300/40 underline-offset-2">เปิดเว็บไซต์ YLG</a>
+        </div>
+        <p id="ylgReferenceStatus" class="mt-0.5 text-[10px] text-slate-500">กำลังดึงราคาอ้างอิงจาก YLG...</p>
+      </div>
+      <div class="grid grid-cols-2 gap-x-5 gap-y-1 text-right text-xs sm:min-w-[340px]">
+        <div class="text-left text-slate-400">YLG รับซื้อ <span id="ylgBuy" class="num ml-1 font-semibold text-emerald-300">—</span></div>
+        <div class="text-left text-slate-400">YLG ขายออก <span id="ylgSell" class="num ml-1 font-semibold text-sky-300">—</span></div>
+        <div id="ylgBuyDiff" class="text-left text-[10px] text-slate-500">เทียบสมาคม —</div>
+        <div id="ylgSellDiff" class="text-left text-[10px] text-slate-500">เทียบสมาคม —</div>
+      </div>
+    </div>
+  </section>
+
+  <main class="grid grid-cols-1 gap-5 lg:grid-cols-12">
+
+    <!-- ============ LEFT COLUMN ============ -->
+    <div class="space-y-5 lg:col-span-7">
+
+      <!-- SIGNAL -->
+      <section class="card card-gold overflow-hidden">
+        <div id="signalHeader" class="flex flex-wrap items-center justify-between gap-3 border-b border-white/5 px-5 py-4">
+          <div class="flex items-center gap-3">
+            <span id="signalEmoji" class="grid h-11 w-11 place-items-center rounded-xl bg-white/5 text-xl">⏳</span>
+            <div>
+              <div class="text-[11px] uppercase tracking-wider text-slate-400">สัญญาณการลงทุน</div>
+              <div id="signalLabel" class="font-display text-lg font-semibold text-slate-200 sm:text-xl">กำลังวิเคราะห์…</div>
+            </div>
+          </div>
+          <div class="text-right">
+            <div class="text-[11px] uppercase tracking-wider text-slate-400">ความมั่นใจ</div>
+            <div id="confidence" class="num font-display text-lg font-semibold text-gold">—</div>
+          </div>
+        </div>
+
+        <div class="space-y-4 px-5 py-4">
+          <p id="signalReason" class="text-sm leading-relaxed text-slate-400">รอข้อมูลราคาเพื่อประมวลผล…</p>
+
+          <!-- RSI GAUGE -->
+          <div>
+            <div class="mb-2 flex items-center justify-between text-[11px]">
+              <span class="text-slate-400">RSI (14) — ดัชนีความแข็งแกร่งสัมพัทธ์</span>
+              <span id="rsiValue" class="num font-semibold text-slate-200">—</span>
+            </div>
+            <div class="relative h-2.5 rounded-full bg-gradient-to-r from-emerald-500 via-amber-400 to-rose-500">
+              <div id="rsiMarker" class="absolute -top-[5px] h-4 w-1.5 rounded-full bg-white shadow ring-2 ring-ink-900 transition-all duration-500" style="left:0%"></div>
+            </div>
+            <div class="mt-1.5 flex justify-between text-[10px] text-slate-500">
+              <span>0 · Oversold</span><span>30</span><span>50</span><span>70</span><span>Overbought · 100</span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div class="rounded-xl bg-white/5 px-3 py-2.5">
+              <div class="text-[10px] uppercase tracking-wide text-slate-400">SMA 5</div>
+              <div id="smaFast" class="num text-sm font-semibold text-sky-300">—</div>
+            </div>
+            <div class="rounded-xl bg-white/5 px-3 py-2.5">
+              <div class="text-[10px] uppercase tracking-wide text-slate-400">SMA 20</div>
+              <div id="smaSlow" class="num text-sm font-semibold text-violet-300">—</div>
+            </div>
+            <div class="rounded-xl bg-white/5 px-3 py-2.5">
+              <div class="text-[10px] uppercase tracking-wide text-slate-400">แนวรับ</div>
+              <div id="supportVal" class="num text-sm font-semibold text-emerald-400">—</div>
+            </div>
+            <div class="rounded-xl bg-white/5 px-3 py-2.5">
+              <div class="text-[10px] uppercase tracking-wide text-slate-400">แนวต้าน</div>
+              <div id="resistanceVal" class="num text-sm font-semibold text-rose-400">—</div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="grid grid-cols-2 gap-3 text-xs sm:grid-cols-3">
+            <div>
+              <div class="text-slate-500">Spread ทองแท่ง</div>
+              <div id="spreadBar" class="num mt-0.5 font-semibold text-slate-200">—</div>
+            </div>
+            <div>
+              <div class="text-slate-500">Spread ทองรูปพรรณ</div>
+              <div id="spreadOrn" class="num mt-0.5 font-semibold text-slate-200">—</div>
+            </div>
+            <div>
+              <div class="text-slate-500">ความผันผวน (σ)</div>
+              <div id="volatility" class="num mt-0.5 font-semibold text-slate-200">—</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card p-5" aria-labelledby="sentimentTitle">
+        <div class="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 id="sentimentTitle" class="font-display text-base font-semibold text-white">Thai Gold Fear &amp; Greed</h2>
+            <p class="text-[11px] text-slate-500">ประเมินจาก RSI (14) และความผันผวนของราคาที่บันทึกในเครื่อง</p>
+          </div>
+          <div class="text-right">
+            <div id="sentimentLabel" class="text-xs font-semibold text-slate-300">รอข้อมูล</div>
+            <div id="sentimentValue" class="num font-display text-2xl font-semibold text-slate-200">—</div>
+          </div>
+        </div>
+        <div class="mt-3 h-2.5 overflow-hidden rounded-full bg-gradient-to-r from-rose-500 via-amber-400 to-emerald-500">
+          <div id="sentimentMarker" class="relative h-full w-1.5 rounded-full bg-white shadow ring-2 ring-ink-900 transition-all duration-500" style="margin-left:0%"></div>
+        </div>
+        <div class="mt-1.5 flex justify-between text-[10px] text-slate-500"><span>กลัวมาก</span><span>กลาง</span><span>โลภมาก</span></div>
+        <p id="sentimentNote" class="mt-3 text-[11px] leading-relaxed text-slate-400">—</p>
+      </section>
+
+      <!-- CHART -->
+      <section class="card p-4 sm:p-5">
+        <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 class="font-display text-base font-semibold text-white">กราฟแนวโน้มราคา</h2>
+            <p class="text-[11px] text-slate-500">ข้อมูลจริงจากสมาคม, YLG และ Fair Price ที่คำนวณจาก Spot/FX · คลิกชื่อเส้นด้านล่างเพื่อซ่อน/แสดง</p>
+            <p id="chartHistoryStatus" class="mt-0.5 text-[10px] text-slate-500">กำลังโหลดประวัติ OHLC จากสมาคม...</p>
+          </div>
+          <div class="flex gap-1 rounded-lg bg-white/5 p-1 text-[11px]">
+            <button data-range="3600000" class="range-btn rounded-md px-2.5 py-1 text-slate-300 transition hover:bg-white/10">1 ชม.</button>
+            <button data-range="21600000" class="range-btn rounded-md px-2.5 py-1 text-slate-300 transition hover:bg-white/10">6 ชม.</button>
+            <button data-range="86400000" class="range-btn rounded-md px-2.5 py-1 text-slate-300 transition hover:bg-white/10">24 ชม.</button>
+            <button data-range="604800000" class="range-btn rounded-md bg-white/10 px-2.5 py-1 text-white transition">7 วัน</button>
+            <button data-range="0" class="range-btn rounded-md px-2.5 py-1 text-slate-300 transition hover:bg-white/10">ทั้งหมด</button>
+          </div>
+        </div>
+        <div class="relative h-[260px] sm:h-[300px]">
+          <canvas id="priceChart"></canvas>
+        </div>
+      </section>
+
+      <!-- HISTORY TABLE -->
+      <section class="card p-4 sm:p-5">
+        <div class="mb-3 flex items-center justify-between">
+          <h2 class="font-display text-base font-semibold text-white">ประวัติการอัปเดตล่าสุด</h2>
+          <button id="clearHistoryBtn" class="rounded-lg border border-white/10 px-2.5 py-1 text-[11px] text-slate-400 transition hover:border-rose-500/40 hover:text-rose-300">ล้างประวัติ</button>
+        </div>
+        <div class="max-h-64 overflow-auto rounded-xl border border-white/5">
+          <table class="w-full text-left text-xs">
+            <thead class="sticky top-0 bg-ink-700/95 text-[10px] uppercase tracking-wide text-slate-400 backdrop-blur">
+              <tr>
+                <th class="px-3 py-2 font-medium">เวลา</th>
+                <th class="px-3 py-2 text-right font-medium">ราคา (ขายออก)</th>
+                <th class="px-3 py-2 text-right font-medium">เปลี่ยนแปลง</th>
+                <th class="px-3 py-2 text-right font-medium">%</th>
+              </tr>
+            </thead>
+            <tbody id="historyBody" class="divide-y divide-white/5 text-slate-300"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <!-- ============ RIGHT COLUMN ============ -->
+    <div class="space-y-5 lg:col-span-5">
+
+      <!-- TARGETS -->
+      <section class="card card-gold p-5">
+        <div class="mb-4 flex items-center gap-2">
+          <span class="grid h-8 w-8 place-items-center rounded-lg bg-gold/15 text-gold">◎</span>
+          <div>
+            <h2 class="font-display text-base font-semibold text-white">เป้าหมายราคาล่วงหน้า</h2>
+            <p class="text-[11px] text-slate-500">คำนวณจากแนวรับ-แนวต้านและความผันผวนล่าสุด</p>
+          </div>
+        </div>
+
+        <div class="space-y-3">
+          <div class="flex items-center justify-between rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-4 py-3">
+            <div>
+              <div class="text-[11px] font-medium text-emerald-300">ราคาเป้าหมายสำหรับเข้าซื้อ</div>
+              <div class="text-[10px] text-slate-500">Target Buy Price</div>
+            </div>
+            <div class="text-right">
+              <div id="targetBuy" class="num font-display text-xl font-semibold text-emerald-400">—</div>
+              <div id="targetBuyDist" class="num text-[10px] text-slate-500">—</div>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between rounded-xl border border-rose-500/20 bg-rose-500/5 px-4 py-3">
+            <div>
+              <div class="text-[11px] font-medium text-rose-300">ราคาเป้าหมายทำกำไร</div>
+              <div class="text-[10px] text-slate-500">Target Sell Price</div>
+            </div>
+            <div class="text-right">
+              <div id="targetSell" class="num font-display text-xl font-semibold text-rose-400">—</div>
+              <div id="targetSellDist" class="num text-[10px] text-slate-500">—</div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div class="rounded-xl bg-white/5 px-4 py-3">
+              <div class="text-[10px] uppercase tracking-wide text-slate-400">Expected ROI</div>
+              <div id="expectedRoi" class="num mt-0.5 font-display text-lg font-semibold text-gold">—</div>
+            </div>
+            <div class="rounded-xl bg-white/5 px-4 py-3">
+              <div class="text-[10px] uppercase tracking-wide text-slate-400">Risk / Reward</div>
+              <div id="riskReward" class="num mt-0.5 font-display text-lg font-semibold text-sky-300">—</div>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between rounded-xl border border-white/5 bg-ink-900/50 px-4 py-2.5">
+            <span class="text-[11px] text-slate-400">จุดตัดขาดทุนแนะนำ (Stop Loss)</span>
+            <span id="stopLoss" class="num text-sm font-semibold text-amber-300">—</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="card card-gold p-5" aria-labelledby="riskMatrixTitle">
+        <div class="mb-4">
+          <h2 id="riskMatrixTitle" class="font-display text-base font-semibold text-white">Smart Risk/Reward Matrix</h2>
+          <p class="text-[11px] text-slate-500">กำหนดต้นทุนเพื่อคำนวณเป้าหมายจากแนวรับ-แนวต้านล่าสุด</p>
+        </div>
+        <label for="riskEntry" class="mb-1 block text-[11px] text-slate-400">ต้นทุนต่อ 1 บาททองคำ (บาท)</label>
+        <input id="riskEntry" type="number" min="1" step="100" inputmode="decimal" placeholder="เช่น 68000"
+          class="num w-full rounded-xl border border-white/10 bg-ink-900/70 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-600 outline-none transition focus:border-gold/60 focus:ring-2 focus:ring-gold/20" />
+        <div class="mt-3 overflow-hidden rounded-xl border border-white/5">
+          <div class="grid grid-cols-[1fr_auto_auto] gap-3 bg-white/5 px-3 py-2 text-[10px] uppercase tracking-wide text-slate-500"><span>ระดับราคา</span><span class="text-right">ราคา</span><span class="text-right">เทียบต้นทุน</span></div>
+          <div class="grid grid-cols-[1fr_auto_auto] items-center gap-3 border-t border-white/5 px-3 py-2.5 text-xs"><span class="text-emerald-300">Take Profit 1</span><span id="riskTp1" class="num font-semibold text-emerald-300">—</span><span id="riskTp1Pct" class="num text-right text-slate-400">—</span></div>
+          <div class="grid grid-cols-[1fr_auto_auto] items-center gap-3 border-t border-white/5 px-3 py-2.5 text-xs"><span class="text-teal-300">Take Profit 2</span><span id="riskTp2" class="num font-semibold text-teal-300">—</span><span id="riskTp2Pct" class="num text-right text-slate-400">—</span></div>
+          <div class="grid grid-cols-[1fr_auto_auto] items-center gap-3 border-t border-white/5 px-3 py-2.5 text-xs"><span class="text-rose-300">Stop Loss</span><span id="riskSl" class="num font-semibold text-rose-300">—</span><span id="riskSlPct" class="num text-right text-slate-400">—</span></div>
+        </div>
+        <div class="mt-3 flex flex-wrap justify-between gap-2 text-[11px]"><span class="text-slate-500">Reward / Risk</span><span id="riskMatrixRatio" class="num font-semibold text-sky-300">—</span></div>
+        <p id="riskMatrixNote" class="mt-2 text-[10px] leading-relaxed text-slate-500">กรอกราคาต้นทุนเพื่อดูแผนโดยประมาณ · ไม่ใช่คำแนะนำการลงทุน</p>
+      </section>
+
+      <!-- CALCULATOR -->
+      <section class="card p-5">
+        <div class="mb-4 flex items-center gap-2">
+          <span class="grid h-8 w-8 place-items-center rounded-lg bg-sky-500/15 text-sky-300">฿</span>
+          <div>
+            <h2 class="font-display text-base font-semibold text-white">เครื่องคำนวณกำไร-ขาดทุน</h2>
+            <p class="text-[11px] text-slate-500">เทียบราคาที่คุณซื้อมากับราคาสมาคมปัจจุบัน</p>
+          </div>
+        </div>
+
+        <div class="space-y-3">
+          <div>
+            <label class="mb-1 block text-[11px] text-slate-400">ราคาที่ซื้อมา (บาท / 1 บาททองคำ)</label>
+            <input id="calcBuyPrice" type="number" inputmode="decimal" placeholder="เช่น 58500"
+              class="num w-full rounded-xl border border-white/10 bg-ink-900/70 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-600 outline-none transition focus:border-gold/60 focus:ring-2 focus:ring-gold/20" />
+          </div>
+
+          <div>
+            <label class="mb-1 block text-[11px] text-slate-400">น้ำหนักทองคำ (บาททองคำ)</label>
+            <input id="calcWeight" type="number" inputmode="decimal" step="0.5" value="1" placeholder="เช่น 2"
+              class="num w-full rounded-xl border border-white/10 bg-ink-900/70 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-600 outline-none transition focus:border-gold/60 focus:ring-2 focus:ring-gold/20" />
+            <div class="mt-2 flex flex-wrap gap-1.5">
+              <button class="w-btn rounded-lg border border-white/10 px-2.5 py-1 text-[11px] text-slate-300 transition hover:border-gold/50 hover:text-gold" data-w="1">1 บาท</button>
+              <button class="w-btn rounded-lg border border-white/10 px-2.5 py-1 text-[11px] text-slate-300 transition hover:border-gold/50 hover:text-gold" data-w="2">2 บาท</button>
+              <button class="w-btn rounded-lg border border-white/10 px-2.5 py-1 text-[11px] text-slate-300 transition hover:border-gold/50 hover:text-gold" data-w="5">5 บาท</button>
+              <button class="w-btn rounded-lg border border-white/10 px-2.5 py-1 text-[11px] text-slate-300 transition hover:border-gold/50 hover:text-gold" data-w="10">10 บาท</button>
+              <button class="w-btn rounded-lg border border-white/10 px-2.5 py-1 text-[11px] text-slate-300 transition hover:border-gold/50 hover:text-gold" data-w="0.5">ครึ่งบาท</button>
+            </div>
+          </div>
+
+          <div>
+            <label class="mb-1 block text-[11px] text-slate-400">ประเภททองคำ</label>
+            <div class="flex gap-2">
+              <label class="type-btn flex-1 cursor-pointer rounded-xl border border-gold/50 bg-gold/10 px-3 py-2 text-center text-xs font-medium text-gold transition">
+                <input type="radio" name="calcType" value="bar" class="sr-only" checked /> ทองแท่ง
+              </label>
+              <label class="type-btn flex-1 cursor-pointer rounded-xl border border-white/10 px-3 py-2 text-center text-xs font-medium text-slate-400 transition hover:border-gold/40">
+                <input type="radio" name="calcType" value="orn" class="sr-only" /> ทองรูปพรรณ
+              </label>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="rounded-xl bg-ink-900/60 p-4">
+            <div class="flex items-baseline justify-between">
+              <span class="text-[11px] text-slate-400">กำไร / ขาดทุน (ประเมิน)</span>
+              <span id="calcPnlPct" class="num text-sm font-semibold text-slate-400">0.00%</span>
+            </div>
+            <div id="calcPnl" class="num mt-1 font-display text-3xl font-semibold text-slate-400">0</div>
+            <div class="mt-1 text-[11px] text-slate-500">บาท</div>
+
+            <div class="mt-4 grid grid-cols-3 gap-2 text-center">
+              <div class="rounded-lg bg-white/5 px-2 py-2">
+                <div class="text-[10px] text-slate-500">ต้นทุนรวม</div>
+                <div id="calcCost" class="num mt-0.5 text-xs font-semibold text-slate-200">—</div>
+              </div>
+              <div class="rounded-lg bg-white/5 px-2 py-2">
+                <div class="text-[10px] text-slate-500">มูลค่าปัจจุบัน</div>
+                <div id="calcValue" class="num mt-0.5 text-xs font-semibold text-slate-200">—</div>
+              </div>
+              <div class="rounded-lg bg-white/5 px-2 py-2">
+                <div class="text-[10px] text-slate-500">น้ำหนัก (กรัม)</div>
+                <div id="calcGram" class="num mt-0.5 text-xs font-semibold text-slate-200">—</div>
+              </div>
+            </div>
+
+            <div id="calcHint" class="mt-3 hidden rounded-lg border border-white/5 bg-white/5 px-3 py-2 text-[11px] text-slate-400"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- BREAK-EVEN CALCULATOR -->
+      <section class="card p-5">
+        <div class="mb-4 flex items-center gap-2">
+          <span class="grid h-8 w-8 place-items-center rounded-lg bg-amber-500/15 text-amber-300">⚖</span>
+          <div>
+            <h2 class="font-display text-base font-semibold text-white">เครื่องคำนวณจุดเสมอทุน</h2>
+            <p class="text-[11px] text-slate-500">รวมค่าบล็อก/ค่ากำเหน็จ แล้วหาราคาขายจริงที่ไม่ขาดทุน</p>
+          </div>
+        </div>
+
+        <div class="space-y-3">
+          <div class="flex items-end gap-2">
+            <div class="flex-1">
+              <label class="mb-1 block text-[11px] text-slate-400">ราคาที่ซื้อมา (บาท / 1 บาททองคำ)</label>
+              <input id="beBuyPrice" type="number" inputmode="decimal" placeholder="เช่น 66000"
+                class="num w-full rounded-xl border border-white/10 bg-ink-900/70 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-600 outline-none transition focus:border-gold/60 focus:ring-2 focus:ring-gold/20" />
+            </div>
+            <button id="beCopyBtn" class="shrink-0 rounded-xl border border-white/10 px-3 py-2.5 text-[10px] text-slate-300 transition hover:border-gold/40 hover:text-gold">ใช้ค่าจาก<br>เครื่องคำนวณบน</button>
+          </div>
+
+          <div>
+            <label class="mb-1 block text-[11px] text-slate-400">น้ำหนักทองคำ (บาททองคำ)</label>
+            <input id="beWeight" type="number" inputmode="decimal" step="0.5" placeholder="เช่น 1"
+              class="num w-full rounded-xl border border-white/10 bg-ink-900/70 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-600 outline-none transition focus:border-gold/60 focus:ring-2 focus:ring-gold/20" />
+          </div>
+
+          <div>
+            <label class="mb-1 block text-[11px] text-slate-400">ค่าบล็อก / ค่ากำหนด / ค่ากำเหน็จ</label>
+            <div class="flex items-end gap-2">
+              <input id="beFee" type="number" inputmode="decimal" placeholder="เช่น 800"
+                class="num w-full rounded-xl border border-white/10 bg-ink-900/70 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-600 outline-none transition focus:border-gold/60 focus:ring-2 focus:ring-gold/20" />
+              <div class="flex shrink-0 gap-1 rounded-lg bg-white/5 p-1 text-[10px]">
+                <label data-base="cursor-pointer rounded-md px-2 py-1 text-center transition" class="flex items-center">
+                  <input type="radio" name="beFeeMode" value="per" class="sr-only" checked /><span>ต่อบาททอง</span>
+                </label>
+                <label data-base="cursor-pointer rounded-md px-2 py-1 text-center transition" class="flex items-center">
+                  <input type="radio" name="beFeeMode" value="total" class="sr-only" /><span>รวมทั้งสิ้น</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label class="mb-1 block text-[11px] text-slate-400">ประเภททองคำ</label>
+            <div class="flex gap-2">
+              <label data-base="flex-1 cursor-pointer rounded-xl border px-3 py-2 text-center text-xs font-medium transition">
+                <input type="radio" name="beProduct" value="bar" class="sr-only" /> ทองแท่ง
+              </label>
+              <label data-base="flex-1 cursor-pointer rounded-xl border px-3 py-2 text-center text-xs font-medium transition">
+                <input type="radio" name="beProduct" value="orn" class="sr-only" checked /> ทองรูปพรรณ
+              </label>
+            </div>
+            <p class="mt-2 text-[10px] text-slate-500">เทียบกับ “ราคารับซื้อ” ที่ร้านทองจ่ายคืนคุณจริง — ทองแท่งมักไม่มีค่ากำหนด แต่รูปพรรณมี</p>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div class="rounded-xl bg-white/5 px-4 py-3">
+              <div class="text-[10px] uppercase tracking-wide text-slate-400">ต้นทุนรวมทั้งหมด</div>
+              <div id="beCost" class="num mt-0.5 font-display text-lg font-semibold text-slate-200">—</div>
+            </div>
+            <div class="rounded-xl border border-gold/25 bg-gold/5 px-4 py-3">
+              <div class="text-[10px] uppercase tracking-wide text-gold">ราคาเสมอทุน / บาททอง</div>
+              <div id="beBreakEven" class="num mt-0.5 font-display text-lg font-semibold text-gold-light">—</div>
+            </div>
+            <div class="rounded-xl bg-white/5 px-4 py-3">
+              <div class="text-[10px] uppercase tracking-wide text-slate-400">ราคารับซื้อวันนี้</div>
+              <div id="beBid" class="num mt-0.5 font-display text-lg font-semibold text-slate-200">—</div>
+            </div>
+            <div class="rounded-xl bg-white/5 px-4 py-3">
+              <div class="text-[10px] uppercase tracking-wide text-slate-400">ส่วนต่างต่อบาททอง</div>
+              <div id="beGap" class="num mt-0.5 font-display text-xl font-semibold text-slate-400">—</div>
+            </div>
+          </div>
+
+          <div id="beNeed" class="text-[11px] leading-relaxed text-slate-400">กรอกราคาที่ซื้อและน้ำหนักเพื่อคำนวณ</div>
+          <div id="beFeeShare" class="text-[10px] text-slate-500">—</div>
+          <div id="beResult" class="mt-3 rounded-xl border border-white/5 bg-white/5 px-3.5 py-3 text-[11px] text-slate-400"></div>
+        </div>
+      </section>
+
+      <!-- PRICE ALERTS -->
+      <section class="card p-5">
+        <div class="mb-4 flex items-center gap-2">
+          <span class="grid h-8 w-8 place-items-center rounded-lg bg-amber-500/15 text-base">🔔</span>
+          <div>
+            <h2 class="font-display text-base font-semibold text-white">ตั้งค่าการแจ้งเตือนราคา</h2>
+            <p class="text-[11px] text-slate-500">แจ้งเตือนทันทีเมื่อราคาสดตรงเงื่อนไขที่ตั้งไว้</p>
+          </div>
+        </div>
+
+        <!-- สถานะสิทธิ์การแจ้งเตือน -->
+        <div id="notifBox" class="mb-4 flex items-center justify-between gap-3 rounded-xl border border-white/5 bg-ink-900/50 px-3.5 py-2.5">
+          <div class="min-w-0 text-[11px]">
+            <div id="notifTitle" class="text-slate-300">การแจ้งเตือนของเบราว์เซอร์</div>
+            <div id="notifSub" class="text-slate-500">—</div>
+          </div>
+          <button id="notifBtn" class="shrink-0 rounded-lg bg-white/10 px-3 py-1.5 text-[11px] font-medium text-slate-200 transition hover:bg-white/20">เปิดใช้งาน</button>
+        </div>
+
+        <div class="space-y-3">
+          <div>
+            <label class="mb-1 block text-[11px] text-slate-400">ต้องการ...</label>
+            <div class="flex gap-2">
+              <button data-side="buy" class="side-btn flex-1 rounded-xl border px-3 py-2 text-xs font-medium transition">ซื้อ (รอราคาลงถึง)</button>
+              <button data-side="sell" class="side-btn flex-1 rounded-xl border px-3 py-2 text-xs font-medium transition">ขาย (รอราคาขึ้นถึง)</button>
+            </div>
+          </div>
+
+          <div>
+            <label class="mb-1 block text-[11px] text-slate-400">ประเภททองคำ</label>
+            <div class="flex gap-2">
+              <button data-prod="bar" class="prod-btn flex-1 rounded-xl border px-3 py-2 text-xs font-medium transition">ทองแท่ง</button>
+              <button data-prod="orn" class="prod-btn flex-1 rounded-xl border px-3 py-2 text-xs font-medium transition">ทองรูปพรรณ</button>
+            </div>
+          </div>
+
+          <div>
+            <label class="mb-1 block text-[11px] text-slate-400">ราคาเป้าหมาย (บาท / 1 บาททองคำ)</label>
+            <input id="alertTarget" type="number" inputmode="decimal" placeholder="เช่น 67000"
+              class="num w-full rounded-xl border border-white/10 bg-ink-900/70 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-600 outline-none transition focus:border-gold/60 focus:ring-2 focus:ring-gold/20" />
+            <div id="alertHint" class="hidden"></div>
+          </div>
+
+          <div>
+            <label class="mb-1 block text-[11px] text-slate-400">เงื่อนไขที่ต้องเป็นจริง</label>
+            <div class="flex gap-2">
+              <button data-cond="lte" class="cond-btn rounded-lg border px-3 py-1.5 text-[11px] transition">≤ ราคาต่ำกว่าหรือเท่ากับ</button>
+              <button data-cond="gte" class="cond-btn rounded-lg border px-3 py-1.5 text-[11px] transition">≥ ราคาสูงกว่าหรือเท่ากับ</button>
+            </div>
+            <div id="alertRefLabel" class="mt-2 text-[10px] text-slate-500">—</div>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-1.5">
+            <span class="text-[10px] text-slate-500">ตั้งค่าด่วน:</span>
+            <button data-preset="support" class="preset-btn rounded-lg border border-white/10 px-2.5 py-1 text-[10px] text-slate-300 transition hover:border-emerald-500/40 hover:text-emerald-300">แนวรับ</button>
+            <button data-preset="resistance" class="preset-btn rounded-lg border border-white/10 px-2.5 py-1 text-[10px] text-slate-300 transition hover:border-rose-500/40 hover:text-rose-300">แนวต้าน</button>
+            <button data-preset="targetBuy" class="preset-btn rounded-lg border border-white/10 px-2.5 py-1 text-[10px] text-slate-300 transition hover:border-emerald-500/40 hover:text-emerald-300">เป้าซื้อจากพยากรณ์</button>
+            <button data-preset="targetSell" class="preset-btn rounded-lg border border-white/10 px-2.5 py-1 text-[10px] text-slate-300 transition hover:border-rose-500/40 hover:text-rose-300">เป้าขายจากพยากรณ์</button>
+          </div>
+
+          <label class="flex cursor-pointer items-center gap-2 text-[11px] text-slate-400">
+            <input id="alertRepeat" type="checkbox" class="peer sr-only" />
+            <span class="relative h-4 w-8 rounded-full bg-slate-700 transition peer-checked:bg-emerald-500/70 after:absolute after:left-0.5 after:top-0.5 after:h-3 after:w-3 after:rounded-full after:bg-white after:transition peer-checked:after:translate-x-4"></span>
+            แจ้งเตือนซ้ำทุก 10 นาที (ถ้าไม่ติ๊ก = แจ้งครั้งเดียวแล้วปิดเอง)
+          </label>
+
+          <label class="flex cursor-pointer items-center gap-2 text-[11px] text-slate-400">
+            <input id="soundToggle" type="checkbox" class="peer sr-only" />
+            <span class="relative h-4 w-8 rounded-full bg-slate-700 transition peer-checked:bg-emerald-500/70 after:absolute after:left-0.5 after:top-0.5 after:h-3 after:w-3 after:rounded-full after:bg-white after:transition peer-checked:after:translate-x-4"></span>
+            เปิดเสียงเตือนเมื่อถึงเป้า
+          </label>
+
+          <button id="addAlertBtn" class="w-full rounded-xl bg-gradient-to-b from-gold-light to-gold px-4 py-2.5 text-sm font-semibold text-ink-900 shadow-glow transition hover:brightness-110 active:scale-[.99]">
+            เพิ่มการแจ้งเตือน
+          </button>
+        </div>
+
+        <div class="divider my-4"></div>
+
+        <div class="mb-2 flex items-center justify-between">
+          <span class="text-[11px] font-medium text-slate-300">รายการเฝ้าดู (<span id="alertCount">0</span>)</span>
+          <button id="clearAlertsBtn" class="rounded-lg border border-white/10 px-2.5 py-1 text-[10px] text-slate-400 transition hover:border-rose-500/40 hover:text-rose-300">ล้างทั้งหมด</button>
+        </div>
+        <div id="alertList" class="space-y-2"></div>
+
+        <div class="mt-4">
+          <div class="mb-1.5 text-[10px] uppercase tracking-wide text-slate-500">ประวัติการแจ้งเตือนล่าสุด</div>
+          <div id="alertLogList" class="space-y-1"></div>
+        </div>
+
+        <p class="mt-3 text-[10px] leading-relaxed text-slate-600">
+          ราคาที่ใช้ตรวจ: ตั้งซื้อจะเทียบ <b class="text-slate-500">ราคาขายออก</b> (ราคาที่คุณต้องจ่าย) · ตั้งขายจะเทียบ <b class="text-slate-500">ราคารับซื้อ</b> (ราคาที่คุณได้จริง)<br>
+          การแจ้งเตือนทำงานขณะเปิดหน้านี้อยู่เท่านั้น — ปิดแท็บหรือปิดเบราว์เซอร์จะไม่แจ้งเตือน
+        </p>
+      </section>
+
+      <!-- METHODOLOGY -->
+      <section class="card p-5">
+        <h2 class="font-display text-base font-semibold text-white">เกณฑ์การวิเคราะห์</h2>
+        <ul class="mt-3 space-y-2 text-[11px] leading-relaxed text-slate-400">
+          <li><span class="text-emerald-400">●</span> <b class="text-slate-300">สัญญาณซื้อ</b> — RSI &lt; 30 (Oversold) หรือราคาแตะแนวรับ</li>
+          <li><span class="text-rose-400">●</span> <b class="text-slate-300">สัญญาณขาย</b> — RSI &gt; 70 (Overbought) หรือราคาชนแนวต้าน</li>
+          <li><span class="text-amber-300">●</span> <b class="text-slate-300">ชะลอการลงทุน</b> — ราคาทรงตัวในกรอบแคบ ไม่มีสัญญาณชัดเจน</li>
+          <li class="pt-1 text-slate-500">แนวรับ-แนวต้านอ้างอิงจากควอไทล์ 20/80 ของราคาย้อนหลัง และ SMA ใช้ข้อมูลการอัปเดตล่าสุดที่เก็บในเบราว์เซอร์</li>
+        </ul>
+      </section>
+
+      <p class="px-1 text-center text-[10px] leading-relaxed text-slate-600">
+        ข้อมูลเพื่อการศึกษาเท่านั้น ไม่ใช่คำแนะนำการลงทุน · ราคาอ้างอิงสมาคมค้าทองคำแห่งประเทศไทย<br>
+        ราคาซื้อขายจริง ณ ร้านทองอาจแตกต่างเล็กน้อย
+      </p>
+    </div>
+  </main>
+
+  <!-- ================= GLOBAL MARKET ================= -->
+  <section class="card mt-5 overflow-hidden">
+    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-white/5 px-5 py-4">
+      <div class="flex items-center gap-3">
+        <span class="grid h-10 w-10 place-items-center rounded-xl bg-sky-500/15 text-lg text-sky-300">🌍</span>
+        <div>
+          <h2 class="font-display text-base font-semibold text-white">ตลาดโลกและการเคลื่อนไหวของค่าเงิน</h2>
+          <p id="macroStatus" class="text-[11px] text-slate-500">กำลังโหลดข้อมูลตลาดโลก…</p>
+        </div>
+      </div>
+      <span class="rounded-lg border border-white/10 px-2.5 py-1 text-[10px] text-slate-400">XAU/USD · USD/THB</span>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3 px-5 py-4 lg:grid-cols-4">
+      <div class="rounded-xl border border-white/5 bg-white/5 px-4 py-3">
+        <div class="text-[10px] uppercase tracking-wide text-slate-400">Gold Spot (XAU/USD)</div>
+        <div id="macroXau" class="num mt-0.5 font-display text-xl font-semibold text-gold-light">—</div>
+        <div id="macroXauChg" class="num mt-0.5 text-[10px] text-slate-500">—</div>
+      </div>
+      <div class="rounded-xl border border-white/5 bg-white/5 px-4 py-3">
+        <div class="text-[10px] uppercase tracking-wide text-slate-400">อัตราแลกเปลี่ยน USD/THB</div>
+        <div id="macroUsdthb" class="num mt-0.5 font-display text-xl font-semibold text-sky-300">—</div>
+        <div id="macroUsdthbDate" class="mt-0.5 text-[10px] text-slate-500">—</div>
+        <div id="macroUsdthbChg" class="num mt-0.5 text-[10px] text-slate-500">—</div>
+      </div>
+      <div class="rounded-xl border border-white/5 bg-white/5 px-4 py-3">
+        <div class="text-[10px] uppercase tracking-wide text-slate-400">ราคาเหมาะสมทองแท่งไทย</div>
+        <div id="macroFair" class="num mt-0.5 font-display text-xl font-semibold text-slate-200">—</div>
+        <div id="macroPremium" class="num mt-0.5 text-[10px] text-slate-500">—</div>
+        <div id="macroFairFormula" class="num mt-1 text-[10px] text-slate-500">สูตร: รอข้อมูล Spot และ USD/THB</div>
+      </div>
+      <div class="rounded-xl border border-white/5 bg-white/5 px-4 py-3">
+        <div class="text-[10px] uppercase tracking-wide text-slate-400">ความอ่อนไหวต่อค่าเงิน</div>
+        <div id="macroSens" class="num mt-0.5 font-display text-xl font-semibold text-amber-300">—</div>
+        <div id="macroSensNote" class="mt-0.5 text-[10px] leading-snug text-slate-500">—</div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 gap-3 border-t border-white/5 px-5 py-4 sm:grid-cols-2" aria-label="แยกปัจจัยการเปลี่ยนแปลงราคาทองไทย">
+      <div class="rounded-xl border border-gold/20 bg-gold/5 px-4 py-3">
+        <div class="text-[10px] uppercase tracking-wide text-gold">แรงขับจาก Gold Spot · 24 ชม.</div>
+        <div id="attributionSpot" class="num mt-1 font-display text-lg font-semibold text-gold-light">—</div>
+        <div id="attributionSpotPct" class="mt-0.5 text-[10px] text-slate-500">รอข้อมูลเปรียบเทียบ</div>
+      </div>
+      <div class="rounded-xl border border-sky-500/20 bg-sky-500/5 px-4 py-3">
+        <div class="text-[10px] uppercase tracking-wide text-sky-300">แรงขับจาก USD/THB · 24 ชม.</div>
+        <div id="attributionFx" class="num mt-1 font-display text-lg font-semibold text-sky-300">—</div>
+        <div id="attributionFxPct" class="mt-0.5 text-[10px] text-slate-500">รอข้อมูลเปรียบเทียบ</div>
+      </div>
+      <div id="attributionTotal" class="sm:col-span-2 text-[11px] text-slate-400">การแยกผลจะแสดงเมื่อมี snapshot ตลาดโลกห่างกันใกล้เคียง 24 ชั่วโมง</div>
+      <div id="fxRiskWarning" class="sm:col-span-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-[11px] leading-relaxed text-amber-200">ความเสี่ยงค่าเงิน: รอข้อมูล USD/THB ย้อนหลัง</div>
+    </div>
+
+    <div class="grid grid-cols-1 gap-5 px-5 pb-5 lg:grid-cols-5">
+      <div class="lg:col-span-3">
+        <div id="macroVerdict" class="rounded-xl border border-white/10 bg-white/5 px-4 py-3.5">
+          <div id="macroVerdictTitle" class="font-display text-sm font-semibold text-slate-300">กำลังวิเคราะห์ผลของค่าเงิน…</div>
+          <p id="macroVerdictBody" class="mt-1.5 text-[11px] leading-relaxed text-slate-300">—</p>
+        </div>
+        <p class="mt-3 text-[10px] leading-relaxed text-slate-600">
+          Fair Price ต่อ 1 บาททองคำ = ((Gold Spot × 0.965 × 15.244) ÷ 31.1035) × USD/THB แล้วเทียบกับราคาขายออกทองแท่ง 96.5% ของสมาคมฯ<br>
+          แหล่งข้อมูลหลัก: goldtraders.or.th · ผ่าน AllOrigins และ DOMParser; สำรอง: Thai Gold API, Gold Spot/FX feeds
+        </p>
+      </div>
+      <div class="lg:col-span-2">
+        <div class="mb-2 text-[11px] text-slate-400">แนวโน้ม USD/THB ย้อนหลัง 30 วัน (บาทต่อ 1 ดอลลาร์)</div>
+        <div class="h-[170px] rounded-xl border border-white/5 p-3">
+          <canvas id="macroChart"></canvas>
+        </div>
+        <p class="mt-2 text-[10px] text-slate-600">ตัวเลขสูงขึ้น = เงินบาทอ่อนลง → ราคาทองไทยสูงขึ้น</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= FORECAST ================= -->
+  <section class="card card-gold mt-5 overflow-hidden">
+    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-white/5 px-5 py-4">
+      <div class="flex items-center gap-3">
+        <span class="grid h-10 w-10 place-items-center rounded-xl bg-gold/15 text-lg text-gold">📅</span>
+        <div>
+          <h2 class="font-display text-base font-semibold text-white">พยากรณ์ทิศทางราคาล่วงหน้า (ระบุวันที่)</h2>
+          <p id="fcNote" class="text-[11px] text-slate-500">กำลังประมวลผล…</p>
+        </div>
+      </div>
+      <div class="flex gap-1 rounded-lg bg-white/5 p-1 text-[11px]">
+        <button data-fdays="7" class="fday-btn rounded-md bg-white/10 px-3 py-1 text-white transition">7 วัน</button>
+        <button data-fdays="14" class="fday-btn rounded-md px-3 py-1 text-slate-300 transition hover:bg-white/10">14 วัน</button>
+      </div>
+    </div>
+
+    <div class="px-5 pt-4">
+      <p id="fcVerdict" class="rounded-xl border border-gold/20 bg-gold/5 px-4 py-2.5 text-xs leading-relaxed text-gold-light">กำลังประมวลผล…</p>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3 px-5 py-4 lg:grid-cols-4">
+      <div class="rounded-xl border border-white/5 bg-white/5 px-4 py-3">
+        <div class="text-[10px] uppercase tracking-wide text-slate-400">แนวโน้มรวม</div>
+        <div id="fcTrend" class="num mt-0.5 font-display text-xl font-semibold text-slate-300">—</div>
+        <div id="fcTrendProb" class="mt-0.5 text-[10px] text-slate-500">—</div>
+      </div>
+      <div class="rounded-xl border border-white/5 bg-white/5 px-4 py-3">
+        <div class="text-[10px] uppercase tracking-wide text-slate-400">ราคาสิ้นช่วงพยากรณ์</div>
+        <div id="fcEndPrice" class="num mt-0.5 font-display text-xl font-semibold text-slate-300">—</div>
+        <div id="fcEndDate" class="mt-0.5 text-[10px] text-slate-500">—</div>
+        <div id="fcEndChg" class="text-[10px] text-slate-500 num">—</div>
+      </div>
+      <div class="rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-4 py-3">
+        <div class="text-[10px] uppercase tracking-wide text-emerald-300">วันที่มีโอกาสขึ้นสูงสุด</div>
+        <div id="fcBestUp" class="mt-1 text-xs font-semibold text-emerald-200">—</div>
+        <div id="fcBestUpVal" class="mt-0.5 text-[10px] text-slate-500 num">—</div>
+      </div>
+      <div class="rounded-xl border border-rose-500/20 bg-rose-500/5 px-4 py-3">
+        <div class="text-[10px] uppercase tracking-wide text-rose-300">วันที่มีโอกาสลงสูงสุด</div>
+        <div id="fcBestDown" class="mt-1 text-xs font-semibold text-rose-200">—</div>
+        <div id="fcBestDownVal" class="mt-0.5 text-[10px] text-slate-500 num">—</div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 gap-5 px-5 pb-5 lg:grid-cols-5">
+      <div class="lg:col-span-3">
+        <div class="max-h-96 overflow-auto rounded-xl border border-white/5">
+          <table class="w-full text-left text-xs">
+            <thead class="sticky top-0 bg-ink-700/95 text-[10px] uppercase tracking-wide text-slate-400 backdrop-blur">
+              <tr>
+                <th class="px-3 py-2 font-medium">วันที่</th>
+                <th class="px-3 py-2 text-center font-medium">ทิศทาง</th>
+                <th class="px-3 py-2 text-right font-medium">ราคาคาดการณ์</th>
+                <th class="px-3 py-2 text-right font-medium">ช่วงคาดการณ์</th>
+                <th class="px-3 py-2 text-right font-medium">วันต่อวัน</th>
+                <th class="px-3 py-2 font-medium">โอกาสขึ้น</th>
+              </tr>
+            </thead>
+            <tbody id="forecastBody" class="divide-y divide-white/5 text-slate-300"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="lg:col-span-2">
+        <div class="mb-2 text-[11px] text-slate-400">การเปลี่ยนแปลงสะสมเทียบราคาวันนี้ (%)</div>
+        <div class="h-[280px] rounded-xl border border-white/5 p-3 lg:h-[300px]">
+          <canvas id="forecastChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="border-t border-white/5 px-5 py-3 text-[10px] leading-relaxed text-slate-600">
+      โมเดลผสม (trend + momentum + mean reversion) อ้างอิงราคาปิดรายวัน · ช่วงคาดการณ์คือกรอบความเชื่อมั่นประมาณ 80%<br>
+      ผลลัพธ์เป็นสถิติเชิงความน่าจะเป็น ไม่ใช่การรับประกัน และไม่ได้รวมวันหยุดนักขัตฤกษ์
+    </div>
+  </section>
+
+  <!-- ================= TRADE JOURNAL ================= -->
+  <section class="card mt-5 overflow-hidden">
+    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-white/5 px-5 py-4">
+      <div class="flex items-center gap-3">
+        <span class="grid h-10 w-10 place-items-center rounded-xl bg-violet-500/15 text-lg text-violet-300">📒</span>
+        <div>
+          <h2 class="font-display text-base font-semibold text-white">บันทึกการซื้อขายและสรุปพอร์ต</h2>
+          <p class="text-[11px] text-slate-500">บันทึกไว้ในเบราว์เซอร์นี้เท่านั้น (LocalStorage) — คำนวณต้นทุนถัวเฉลี่ยและกำไรให้อัตโนมัติ</p>
+        </div>
+      </div>
+      <div class="flex gap-1.5">
+        <button id="exportTradesBtn" class="rounded-lg border border-white/10 px-2.5 py-1.5 text-[11px] text-slate-300 transition hover:border-sky-500/40 hover:text-sky-300">ส่งออก JSON</button>
+        <button id="clearTradesBtn" class="rounded-lg border border-white/10 px-2.5 py-1.5 text-[11px] text-slate-400 transition hover:border-rose-500/40 hover:text-rose-300">ล้างทั้งหมด</button>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3 px-5 py-4 lg:grid-cols-3 xl:grid-cols-6">
+      <div class="rounded-xl border border-white/5 bg-white/5 px-4 py-3">
+        <div class="text-[10px] uppercase tracking-wide text-slate-400">ทองที่ถืออยู่</div>
+        <div id="pfHold" class="num mt-0.5 font-display text-xl font-semibold text-slate-200">0</div>
+        <div id="pfHoldGram" class="mt-0.5 text-[10px] text-slate-500">ยังไม่ถือทอง</div>
+      </div>
+      <div class="rounded-xl border border-white/5 bg-white/5 px-4 py-3">
+        <div class="text-[10px] uppercase tracking-wide text-slate-400">ต้นทุนถัวเฉลี่ย</div>
+        <div id="pfAvg" class="num mt-0.5 font-display text-xl font-semibold text-slate-200">—</div>
+        <div id="pfAvgNote" class="mt-0.5 text-[10px] text-slate-500">—</div>
+      </div>
+      <div class="rounded-xl border border-white/5 bg-white/5 px-4 py-3">
+        <div class="text-[10px] uppercase tracking-wide text-slate-400">มูลค่าปัจจุบัน</div>
+        <div id="pfValue" class="num mt-0.5 font-display text-xl font-semibold text-slate-200">—</div>
+        <div id="pfValueNote" class="mt-0.5 text-[10px] text-slate-500">—</div>
+      </div>
+      <div class="rounded-xl border border-white/5 bg-white/5 px-4 py-3">
+        <div class="text-[10px] uppercase tracking-wide text-slate-400">กำไรที่ยังไม่ปิด</div>
+        <div id="pfUnrealized" class="num mt-0.5 font-display text-xl font-semibold text-slate-400">—</div>
+        <div id="pfUnrealizedNote" class="mt-0.5 text-[10px] text-slate-500">—</div>
+      </div>
+      <div class="rounded-xl border border-white/5 bg-white/5 px-4 py-3">
+        <div class="text-[10px] uppercase tracking-wide text-slate-400">กำไรที่ปิดแล้ว</div>
+        <div id="pfRealized" class="num mt-0.5 font-display text-xl font-semibold text-slate-400">0</div>
+        <div class="mt-0.5 text-[10px] text-slate-500">จากรายการขายทั้งหมด</div>
+      </div>
+      <div class="rounded-xl border border-gold/25 bg-gold/5 px-4 py-3">
+        <div class="text-[10px] uppercase tracking-wide text-gold">กำไรรวมทั้งพอร์ต</div>
+        <div id="pfTotal" class="mt-0.5 font-display text-xl font-semibold text-gold-light">0</div>
+        <div class="mt-0.5 text-[10px] text-slate-500"><span id="pfCount">0 รายการ</span> · ลงทุน <span id="pfInvested" class="num">0</span> · ค่าบล็อก <span id="pfFees" class="num">0</span></div>
+      </div>
+    </div>
+
+    <div id="pfWarning" class="mx-5 mb-4 hidden rounded-xl border border-amber-500/25 bg-amber-500/5 px-3.5 py-2.5 text-[11px] text-amber-300"></div>
+
+    <div class="grid grid-cols-1 gap-5 px-5 pb-5 xl:grid-cols-5">
+      <!-- ฟอร์มบันทึก -->
+      <div class="xl:col-span-2">
+        <div class="rounded-xl border border-white/5 bg-ink-900/40 p-4">
+          <div class="mb-3 text-[11px] font-medium text-slate-300">เพิ่มรายการใหม่</div>
+          <div class="space-y-3">
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="mb-1 block text-[10px] text-slate-400">วันที่</label>
+                <input id="jDate" type="date" class="num w-full rounded-lg border border-white/10 bg-ink-900/70 px-3 py-2 text-xs text-white outline-none transition focus:border-gold/60" />
+              </div>
+              <div>
+                <label class="mb-1 block text-[10px] text-slate-400">ประ​เภท</label>
+                <select id="jSide" class="w-full rounded-lg border border-white/10 bg-ink-900/70 px-3 py-2 text-xs text-white outline-none transition focus:border-gold/60">
+                  <option value="buy">ซื้อ</option>
+                  <option value="sell">ขาย</option>
+                </select>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="mb-1 block text-[10px] text-slate-400">สินค้า</label>
+                <select id="jProduct" class="w-full rounded-lg border border-white/10 bg-ink-900/70 px-3 py-2 text-xs text-white outline-none transition focus:border-gold/60">
+                  <option value="bar">ทองแท่ง</option>
+                  <option value="orn">ทองรูปพรรณ</option>
+                </select>
+              </div>
+              <div>
+                <label class="mb-1 block text-[10px] text-slate-400">น้ำหนัก (บาททองคำ)</label>
+                <input id="jWeight" type="number" inputmode="decimal" step="0.5" placeholder="1"
+                  class="num w-full rounded-lg border border-white/10 bg-ink-900/70 px-3 py-2 text-xs text-white placeholder:text-slate-600 outline-none transition focus:border-gold/60" />
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="mb-1 block text-[10px] text-slate-400">ราคาต่อบาททอง</label>
+                <input id="jPrice" type="number" inputmode="decimal" placeholder="67850"
+                  class="num w-full rounded-lg border border-white/10 bg-ink-900/70 px-3 py-2 text-xs text-white placeholder:text-slate-600 outline-none transition focus:border-gold/60" />
+              </div>
+              <div>
+                <label class="mb-1 block text-[10px] text-slate-400">ค่าบล็อก/ค่ากำหนด</label>
+                <input id="jFee" type="number" inputmode="decimal" placeholder="0"
+                  class="num w-full rounded-lg border border-white/10 bg-ink-900/70 px-3 py-2 text-xs text-white placeholder:text-slate-600 outline-none transition focus:border-gold/60" />
+              </div>
+            </div>
+            <div>
+              <label class="mb-1 block text-[10px] text-slate-400">หมายเหตุ (ไม่บังคับ)</label>
+              <input id="jNote" type="text" maxlength="120" placeholder="เช่น ซื้อที่ร้านหัวสำเพ็ง 1 บาท"
+                class="w-full rounded-lg border border-white/10 bg-ink-900/70 px-3 py-2 text-xs text-white placeholder:text-slate-600 outline-none transition focus:border-gold/60" />
+            </div>
+            <div class="flex gap-2">
+              <button id="addTradeBtn" class="flex-1 rounded-lg bg-gradient-to-b from-gold-light to-gold px-3 py-2.5 text-xs font-semibold text-ink-900 transition hover:brightness-110 active:scale-[.99]">บันทึกรายการ</button>
+              <button id="useCurrentPriceBtn" class="rounded-lg border border-white/10 px-3 py-2.5 text-[10px] text-slate-300 transition hover:border-gold/40 hover:text-gold">ใช้ราคาวันนี้</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ตารางรายการ -->
+      <div class="xl:col-span-3">
+        <div class="max-h-[420px] overflow-auto rounded-xl border border-white/5">
+          <table class="w-full text-left text-xs">
+            <thead class="sticky top-0 bg-ink-700/95 text-[10px] uppercase tracking-wide text-slate-400 backdrop-blur">
+              <tr>
+                <th class="px-3 py-2 font-medium">วันที่</th>
+                <th class="px-3 py-2 font-medium">ประ​เภท</th>
+                <th class="px-3 py-2 font-medium">สินค้า</th>
+                <th class="px-3 py-2 text-right font-medium">น้ำหนัก</th>
+                <th class="px-3 py-2 text-right font-medium">ราคา/บาท</th>
+                <th class="px-3 py-2 text-right font-medium">ค่าบล็อก</th>
+                <th class="px-3 py-2 text-right font-medium">สุทธิ</th>
+                <th class="px-3 py-2 text-right font-medium"></th>
+              </tr>
+            </thead>
+            <tbody id="tradeList" class="divide-y divide-white/5 text-slate-300"></tbody>
+          </table>
+        </div>
+        <p class="mt-2 text-[10px] leading-relaxed text-slate-600">
+          กำไรที่ยังไม่ปิดคิดจากราคาขายออกวันนี้ของทองแต่ละประเภทที่ถืออยู่ และหักค่าบล็อกในต้นทุนแล้ว (วิธีต้นทุนถัวเฉลี่ย · รายการขายจะหักจากทองที่ถือก่อนหน้า)
+        </p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+/* =========================================================
+ * GoldSignal TH — Single Page Application
+ * ========================================================= */
+'use strict';
+
+const CFG = {
+  REFRESH_SEC: 60,
+  HISTORY_KEY: 'goldsignal_history_v1',
+  YLG_HISTORY_KEY: 'goldsignal_ylg_history_v1',
+  OFFICIAL_OHLC_KEY: 'goldsignal_goldtraders_ohlc_v1',
+  MAX_HISTORY: 10080,
+  OHLC_REFRESH_MS: 10 * 60 * 1000,
+  SEED_POINTS: 120,
+  RSI_PERIOD: 14,
+  SMA_FAST: 5,
+  SMA_SLOW: 20,
+  GRAM_PER_BAHT: 15.244,
+  REQUEST_TIMEOUT: 8000,
+  PROXY_TIMEOUT: 3000,
+
+  /* พยากรณ์รายวัน */
+  DAILY_KEY: 'goldsignal_daily_v1',
+  FORECAST_DAYS: 7,
+  BOOTSTRAP_DAYS: 70,
+  DAILY_VOL: 0.0085,
+  CONFIDENCE_Z: 1.28,     /* ช่วงคาดการณ์ ~80% */
+
+  /* ตลาดโลก */
+  MACRO_KEY: 'goldsignal_macro_v1',
+  MACRO_SNAP_MIN: 30 * 60 * 1000,
+  TROY_OZ_GRAMS: 31.1034768,
+  PURITY_965: 0.965,       /* ทองคำแท่งไทยความบริสุทธิ์ 96.5% */
+  XAU_API: 'https://api.gold-api.com/price/XAU',
+  FX_API: 'https://open.er-api.com/v6/latest/USD',
+  FX_CDN: 'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@',
+  YLG_API: 'https://register.ylgbullion.co.th/api/price/gold',
+
+  /* บันทึกการซื้อขาย */
+  TRADES_KEY: 'goldsignal_trades_v1',
+
+  /* การแจ้งเตือนราคา */
+  ALERTS_KEY: 'goldsignal_alerts_v1',
+  ALERT_REPEAT_COOLDOWN: 10 * 60 * 1000,
+  TOAST_MS: 12000,
+  MAX_TOASTS: 3,
+  MAX_ALERTS: 60
+};
+
+const GOLDTRADERS_HOME = 'https://goldtraders.or.th/';
+const GOLDTRADERS_LATEST = 'https://goldtraders.or.th/api/GoldPrices/Latest?readjson=false';
+const GOLDTRADERS_OHLC = 'https://goldtraders.or.th/api/GoldPrices/ohlc?readjson=true';
+const ALL_ORIGINS = 'https://api.allorigins.win/get?url=';
+const JINA_PROXY = 'https://r.jina.ai/http://';
+
+/* Thai Gold API สำรอง หาก proxy หรือบริการสมาคมไม่พร้อมใช้งาน */
+const ENDPOINTS = [
+  'https://api.chnwt.dev/thai-gold-api/latest',
+  'https://api.chnwt.dev/thai-gold-api/price/latest'
+];
+
+/* ราคาตั้งต้นของโหมดจำลอง (บาท / 1 บาททองคำ) */
+const MOCK_BASE = { barBuy: 67650, barSell: 67850, ornBuy: 66295, ornSell: 68650 };
+
+const state = {
+  data: null,        // { barBuy, barSell, ornBuy, ornSell }
+  history: [],       // [{ t, price, seed }]  — ระดับนาที
+  daily: [],         // [{ date, close, synthetic }] — ระดับวัน (ใช้พยากรณ์)
+  forecast: null,
+  forecastDays: 7,
+  analysis: null,
+  source: 'mock',    // 'api' | 'mock'
+  lastUpdated: null,
+  autoRefresh: true,
+  countdown: CFG.REFRESH_SEC,
+  range: 604800000,
+  loading: false,
+
+  /* การแจ้งเตือนราคา */
+  alerts: [],          // [{ id, side, product, condition, target, repeat, active, ... }]
+  alertLog: [],        // ประวัติการแจ้งเตือนล่าสุด
+  alertForm: { side: 'buy', product: 'bar', condition: 'lte' },
+  soundOn: true,
+  audioCtx: null,
+
+  /* ตลาดโลก */
+  macro: {
+    xau: null, xauUpdated: null, usdthb: null, fxDate: null,
+    fxSeries: [], seriesLoaded: false, xauChg: null,
+    chg1: null, chg7: null, chg30: null,
+    fair: null, premiumPct: null, premiumBaht: null,
+    error: null, loading: false
+  },
+  macroSnaps: [],       // [{ t, xau, usdthb }] เก็บเป็นประวัติเพื่อเทียบแนวโน้ม
+  ylgQuote: null,
+  ylgError: null,
+  ylgHistory: [],
+  officialOhlc: [],
+  officialOhlcUpdated: 0,
+  officialOhlcLoading: false,
+
+  /* บันทึกการซื้อขาย */
+  trades: []
+};
+
+/* ---------------- Utilities ---------------- */
+
+const $ = id => document.getElementById(id);
+
+const nf0 = new Intl.NumberFormat('th-TH', { maximumFractionDigits: 0 });
+const nf2 = new Intl.NumberFormat('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const nf3 = new Intl.NumberFormat('th-TH', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+const fmt0 = v => (v == null || !isFinite(v)) ? '—' : nf0.format(Math.round(v));
+const fmt2 = v => (v == null || !isFinite(v)) ? '—' : nf2.format(v);
+const fmt3 = v => (v == null || !isFinite(v)) ? '—' : nf3.format(v);
+
+function toNumber(v) {
+  if (v == null) return null;
+  const n = parseFloat(String(v).replace(/[^0-9.\-]/g, ''));
+  return Number.isFinite(n) ? n : null;
+}
+
+function timeLabel(ts) {
+  const d = new Date(ts);
+  return d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', hour12: false });
+}
+function dateTimeLabel(ts) {
+  const d = new Date(ts);
+  return d.toLocaleString('th-TH', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false });
+}
+function signed(v, digits) {
+  const s = digits === 0 ? fmt0(Math.abs(v)) : fmt2(Math.abs(v));
+  return (v > 0 ? '+' : v < 0 ? '-' : '') + s;
+}
+
+/* ---------------- Technical indicators ---------------- */
+
+/** Simple Moving Average ของค่าล่าสุด n ตัว */
+function calcSMA(values, n) {
+  if (!values || values.length < n) return null;
+  let sum = 0;
+  for (let i = values.length - n; i < values.length; i++) sum += values[i];
+  return sum / n;
+}
+
+/** SMA แบบอนุกรม สำหรับวาดกราฟ (มี null ช่วงต้น) */
+function rollingSMA(values, n) {
+  const out = new Array(values.length).fill(null);
+  let sum = 0;
+  for (let i = 0; i < values.length; i++) {
+    sum += values[i];
+    if (i >= n) sum -= values[i - n];
+    if (i >= n - 1) out[i] = sum / n;
+  }
+  return out;
+}
+
+/** Relative Strength Index (Wilder smoothing) */
+function calcRSI(values, period) {
+  period = period || CFG.RSI_PERIOD;
+  if (!values || values.length < period + 1) return null;
+  let gain = 0, loss = 0;
+  for (let i = 1; i <= period; i++) {
+    const d = values[i] - values[i - 1];
+    if (d >= 0) gain += d; else loss -= d;
+  }
+  let avgGain = gain / period;
+  let avgLoss = loss / period;
+  for (let i = period + 1; i < values.length; i++) {
+    const d = values[i] - values[i - 1];
+    avgGain = (avgGain * (period - 1) + Math.max(d, 0)) / period;
+    avgLoss = (avgLoss * (period - 1) + Math.max(-d, 0)) / period;
+  }
+  if (avgGain === 0 && avgLoss === 0) return 50; /* ราคานิ่งสนิท → เป็นกลาง ไม่ใช่ Overbought */
+  if (avgLoss === 0) return 100;
+  const rs = avgGain / avgLoss;
+  return 100 - 100 / (1 + rs);
+}
+
+function stddev(arr) {
+  if (!arr || arr.length < 2) return 0;
+  const mean = arr.reduce((a, b) => a + b, 0) / arr.length;
+  const varr = arr.reduce((a, b) => a + (b - mean) * (b - mean), 0) / (arr.length - 1);
+  return Math.sqrt(varr);
+}
+
+/** ควอไทล์จากอาร์เรย์ที่เรียงแล้ว */
+function quantile(sortedAsc, q) {
+  if (!sortedAsc.length) return null;
+  const pos = (sortedAsc.length - 1) * q;
+  const base = Math.floor(pos);
+  const rest = pos - base;
+  if (sortedAsc[base + 1] === undefined) return sortedAsc[base];
+  return sortedAsc[base] + rest * (sortedAsc[base + 1] - sortedAsc[base]);
+}
+
+/* ---------------- Analysis engine ---------------- */
+
+function analyze(history) {
+  const closes = history.map(h => h.price).filter(p => Number.isFinite(p) && p > 0);
+  if (closes.length < 5) return null;
+
+  const price = closes[closes.length - 1];
+  const smaFast = calcSMA(closes, CFG.SMA_FAST);
+  const smaSlow = calcSMA(closes, CFG.SMA_SLOW);
+  const rsi = calcRSI(closes, CFG.RSI_PERIOD);
+
+  const win = closes.slice(-30).slice().sort((a, b) => a - b);
+  const support = quantile(win, 0.2);
+  const resistance = quantile(win, 0.8);
+
+  /* ความผันผวนจากผลตอบแทนรายช่วง (%) */
+  const rets = [];
+  const start = Math.max(1, closes.length - 40);
+  for (let i = start; i < closes.length; i++) {
+    rets.push((closes[i] - closes[i - 1]) / closes[i - 1]);
+  }
+  const vol = stddev(rets) * 100;
+
+  /* ---------- คะแนนสัญญาณ ---------- */
+  let score = 0;
+  const reasons = [];
+
+  if (rsi != null) {
+    if (rsi < 30) { score += 2; reasons.push('RSI ' + fmt2(rsi) + ' อยู่ในโซน Oversold (ต่ำกว่า 30)'); }
+    else if (rsi < 45) { score += 1; reasons.push('RSI ' + fmt2(rsi) + ' อ่อนตัวลงแต่ยังไม่ Oversold'); }
+    else if (rsi > 70) { score -= 2; reasons.push('RSI ' + fmt2(rsi) + ' อยู่ในโซน Overbought (สูงกว่า 70)'); }
+    else if (rsi > 55) { score -= 1; reasons.push('RSI ' + fmt2(rsi) + ' แข็งค่าขึ้นเรื่อย ๆ เข้าใกล้โซน Overbought'); }
+    else { reasons.push('RSI ' + fmt2(rsi) + ' อยู่กลางกรอบ สมดุลระหว่างผู้ซื้อและผู้ขาย'); }
+  }
+
+  if (smaFast != null && smaSlow != null) {
+    if (smaFast > smaSlow) { score += 0.5; reasons.push('SMA5 ตัดขึ้นเหนือ SMA20 (แนวโน้มระยะสั้นเป็นขาขึ้น)'); }
+    else { score -= 0.5; reasons.push('SMA5 อยู่ใต้ SMA20 (แนวโน้มระยะสั้นอ่อนตัว)'); }
+  }
+
+  if (support != null && price <= support * 1.006) {
+    score += 1.5;
+    reasons.push('ราคากำลังทดสอบแนวรับที่ ' + fmt0(support) + ' บาท — จุดเข้าซื้อที่น่าสนใจ');
+  }
+  if (resistance != null && price >= resistance * 0.994) {
+    score -= 1.5;
+    reasons.push('ราคากำลังชนแนวต้านที่ ' + fmt0(resistance) + ' บาท — ควรทยอยทำกำไร');
+  }
+  if (smaSlow != null) {
+    if (price < smaSlow * 0.99) score += 0.5;
+    else if (price > smaSlow * 1.01) score -= 0.5;
+  }
+
+  let sig;
+  if (score >= 3) sig = { key: 'strong-buy', emoji: '🟢', label: 'สัญญาณซื้อ · Strong Buy', tone: 'emerald' };
+  else if (score >= 1) sig = { key: 'buy', emoji: '🟢', label: 'สัญญาณซื้อ · Buy', tone: 'emerald' };
+  else if (score <= -3) sig = { key: 'strong-sell', emoji: '🔴', label: 'สัญญาณขาย · Strong Sell', tone: 'rose' };
+  else if (score <= -1) sig = { key: 'sell', emoji: '🔴', label: 'สัญญาณขาย · Sell', tone: 'rose' };
+  else sig = { key: 'hold', emoji: '🟡', label: 'ชะลอการลงทุน · Hold / Wait', tone: 'amber' };
+
+  const confidence = Math.max(45, Math.min(95, Math.round(48 + Math.abs(score) * 11)));
+
+  /* ---------- เป้าหมายราคา ---------- */
+  const band = Math.max(0.006, Math.min((vol / 100) * 1.2, 0.03));
+  const targetBuy = Math.min(price, Math.max(support != null ? support : price * (1 - band), price * (1 - band)));
+  const targetSell = Math.max(price * (1 + band), resistance != null ? resistance : price * (1 + band));
+  const roi = ((targetSell - targetBuy) / targetBuy) * 100;
+  const stopLoss = targetBuy * (1 - Math.max(0.008, (vol / 100) * 1.8));
+
+  /* Risk/Reward วัดจากแผนเข้าซื้อที่ Target Buy → ออกที่ Target Sell */
+  const risk = Math.max(targetBuy - stopLoss, 1);
+  const rr = (targetSell - targetBuy) / risk;
+
+  return {
+    price, closes, smaFast, smaSlow, rsi, support, resistance, vol,
+    score, signal: sig, confidence, reasons,
+    targetBuy, targetSell, roi, stopLoss, rr,
+    targetBuyDist: ((targetBuy - price) / price) * 100,
+    targetSellDist: ((targetSell - price) / price) * 100
+  };
+}
+
+function renderSentiment(a) {
+  const observations = state.history.filter(point => !point.seed).length;
+  if (!a || a.rsi == null || observations < CFG.RSI_PERIOD + 1) {
+    $('sentimentValue').textContent = '—';
+    $('sentimentLabel').textContent = 'รอข้อมูลจริง';
+    $('sentimentNote').textContent = 'สะสมข้อมูลราคาได้ ' + observations + ' / ' + (CFG.RSI_PERIOD + 1) + ' จุดก่อนคำนวณ RSI และ Fear & Greed';
+    return;
+  }
+  const volatilityFear = clamp((a.vol / 0.6) * 24, 0, 24);
+  const score = Math.round(clamp(50 + (a.rsi - 50) * 0.75 - volatilityFear, 0, 100));
+  const label = score <= 20 ? 'กลัวมาก (Extreme Fear)'
+    : score <= 40 ? 'ตลาดกลัว (Fear)'
+      : score <= 60 ? 'เป็นกลาง (Neutral)'
+        : score <= 80 ? 'ตลาดโลภ (Greed)' : 'โลภมาก (Extreme Greed)';
+  $('sentimentValue').textContent = score + ' / 100';
+  $('sentimentLabel').textContent = label;
+  $('sentimentLabel').className = 'text-xs font-semibold ' + (score <= 40 ? 'text-rose-300' : score >= 61 ? 'text-emerald-300' : 'text-amber-300');
+  $('sentimentMarker').style.marginLeft = 'calc(' + score + '% - 3px)';
+  $('sentimentNote').textContent = 'RSI ' + fmt2(a.rsi) + ' · ความผันผวน ' + fmt2(a.vol) + '% ต่อรอบ' +
+    (state.source === 'mock' ? ' · ขณะนี้ใช้ราคา/ประวัติจำลอง ดัชนีจึงไม่ใช่ภาวะตลาดจริง' : ' · ความผันผวนสูงกดคะแนนลงเพื่อสะท้อนความเสี่ยง');
+}
+
+function renderRiskMatrix() {
+  const entry = toNumber($('riskEntry').value);
+  const a = state.analysis;
+  const observations = state.history.filter(point => !point.seed).length;
+  if (!entry || entry <= 0 || !a || observations < CFG.RSI_PERIOD + 1) {
+    ['riskTp1', 'riskTp1Pct', 'riskTp2', 'riskTp2Pct', 'riskSl', 'riskSlPct', 'riskMatrixRatio'].forEach(id => { $(id).textContent = '—'; });
+    $('riskMatrixNote').textContent = entry && observations < CFG.RSI_PERIOD + 1
+      ? 'รอข้อมูลราคาจริง ' + observations + ' / ' + (CFG.RSI_PERIOD + 1) + ' จุดก่อนคำนวณแนวรับ-แนวต้าน'
+      : 'กรอกราคาต้นทุนเพื่อดูแผนโดยประมาณ · ไม่ใช่คำแนะนำการลงทุน';
+    return;
+  }
+
+  const riskDistance = Math.max(entry * Math.max(a.vol / 100 * 1.5, 0.005), entry * 0.005);
+  const tp1 = a.resistance > entry ? a.resistance : entry + riskDistance;
+  const tp2 = Math.max(tp1 + riskDistance, entry + riskDistance * 2);
+  const stop = a.support < entry ? Math.min(a.support * 0.998, entry - entry * 0.005) : entry - riskDistance;
+  const risk = entry - stop;
+  const pct = price => ((price - entry) / entry) * 100;
+  $('riskTp1').textContent = fmt0(tp1);
+  $('riskTp1Pct').textContent = signed(pct(tp1), 2) + '%';
+  $('riskTp2').textContent = fmt0(tp2);
+  $('riskTp2Pct').textContent = signed(pct(tp2), 2) + '%';
+  $('riskSl').textContent = fmt0(stop);
+  $('riskSlPct').textContent = signed(pct(stop), 2) + '%';
+  $('riskMatrixRatio').textContent = '1 : ' + fmt2((tp1 - entry) / risk);
+  $('riskMatrixNote').textContent = 'อิงแนวรับ ' + fmt0(a.support) + ' / แนวต้าน ' + fmt0(a.resistance) +
+    ' และความผันผวนล่าสุด' + (state.source === 'mock' ? ' · ข้อมูลราคาปัจจุบันเป็นข้อมูลจำลอง' : '') + ' · ระดับราคาเป็นค่าประมาณ ไม่รับประกันผล';
+}
+/* ---------------- Data fetching ---------------- */
+
+async function fetchWithTimeout(url, ms) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), ms);
+  try {
+    const res = await fetch(url, { signal: ctrl.signal, cache: 'no-store', headers: { Accept: 'application/json' } });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return await res.json();
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function fetchTextWithTimeout(url, ms) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), ms);
+  try {
+    const res = await fetch(url, { signal: ctrl.signal, cache: 'no-store', headers: { Accept: 'text/plain, application/json' } });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return await res.text();
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function parseOfficialOhlc(responseText) {
+  const start = responseText.indexOf('[{');
+  const end = responseText.lastIndexOf(']');
+  if (start < 0 || end < start) return [];
+  const rows = JSON.parse(responseText.slice(start, end + 1));
+  if (!Array.isArray(rows)) return [];
+  return rows.map(row => ({
+    t: Date.parse(row.hour),
+    open: Number(row.open),
+    high: Number(row.high),
+    low: Number(row.low),
+    price: Number(row.close),
+    official: true
+  })).filter(point => Number.isFinite(point.t) && [point.open, point.high, point.low, point.price].every(Number.isFinite))
+    .sort((left, right) => left.t - right.t)
+    .filter((point, index, points) => index === 0 || point.t !== points[index - 1].t);
+}
+
+function loadOfficialOhlc() {
+  try {
+    const cached = JSON.parse(localStorage.getItem(CFG.OFFICIAL_OHLC_KEY) || 'null');
+    if (cached && Array.isArray(cached.points)) {
+      state.officialOhlc = cached.points.filter(point => point && Number.isFinite(point.t) && Number.isFinite(point.price));
+      state.officialOhlcUpdated = Number(cached.updatedAt) || 0;
+    }
+  } catch (err) {
+    state.officialOhlc = [];
+    state.officialOhlcUpdated = 0;
+  }
+  renderOfficialOhlcStatus();
+}
+
+function renderOfficialOhlcStatus() {
+  const status = $('chartHistoryStatus');
+  if (!status) return;
+  if (!state.officialOhlc.length) {
+    status.textContent = 'ยังไม่มีประวัติ OHLC จากสมาคม · กำลังลองดึงข้อมูล';
+    return;
+  }
+  const first = state.officialOhlc[0];
+  const latest = state.officialOhlc[state.officialOhlc.length - 1];
+  status.textContent = 'Gold Traders OHLC ' + nf0.format(state.officialOhlc.length) + ' แท่ง · ' +
+    dateTimeLabel(first.t) + ' ถึง ' + dateTimeLabel(latest.t) +
+    (state.officialOhlcUpdated ? ' · sync ' + dateTimeLabel(state.officialOhlcUpdated) : ' · cache');
+}
+
+async function refreshOfficialOhlc(force) {
+  if (state.officialOhlcLoading || (!force && Date.now() - state.officialOhlcUpdated < CFG.OHLC_REFRESH_MS)) return;
+  state.officialOhlcLoading = true;
+  try {
+    const url = JINA_PROXY + 'goldtraders.or.th/api/GoldPrices/ohlc?readjson=true';
+    const text = await fetchTextWithTimeout(url, 20000);
+    const points = parseOfficialOhlc(text);
+    if (!points.length) throw new Error('ไม่พบแท่งราคา OHLC จากสมาคม');
+    state.officialOhlc = points;
+    state.officialOhlcUpdated = Date.now();
+    try {
+      localStorage.setItem(CFG.OFFICIAL_OHLC_KEY, JSON.stringify({ updatedAt: state.officialOhlcUpdated, points }));
+    } catch (err) {
+      console.warn('[GoldSignal] could not cache association OHLC history', err);
+    }
+    renderOfficialOhlcStatus();
+    updateChart();
+  } catch (err) {
+    console.warn('[GoldSignal] association OHLC history unavailable:', err && err.message);
+    renderOfficialOhlcStatus();
+  } finally {
+    state.officialOhlcLoading = false;
+  }
+}
+
+function pickPair(obj) {
+  if (!obj || typeof obj !== 'object') return null;
+  const buy = toNumber(obj.buy ?? obj.Buy ?? obj.buy_price ?? obj.price_buy ?? obj.กําไร);
+  const sell = toNumber(obj.sell ?? obj.Sell ?? obj.sell_price ?? obj.price_sell);
+  if (buy == null || sell == null) return null;
+  return { buy, sell };
+}
+
+/** รองรับ API หลายรูปแบบ (chnwt ฯลฯ) — คืนค่า {barBuy,...} หรือ null */
+function parsePayload(json) {
+  if (!json) return null;
+  const root = json.response ?? json.data ?? json.result ?? json;
+  const p = root.price ?? root.prices ?? root;
+
+  const rawBar = p.gold_bar ?? p.goldBar ?? p.goldBar9999 ?? p.bar ?? p['ทองแท่ง'];
+  const rawOrn = p.gold_ornament ?? p.goldOrnament ?? p.ornament ?? p.jewelry ?? p['ทองรูปพรรณ'] ?? p['ทองรูปพรรณ96.5'];
+
+  let bar = pickPair(rawBar);
+  let orn = pickPair(rawOrn);
+
+  /* บาง API (เช่น chnwt) ส่ง field `gold` หมายถึงทองรูปพรรณ โดยมี `gold_bar` แยกต่างหาก */
+  if (!bar && !orn) bar = pickPair(p.gold);
+  else if (bar && !orn) orn = pickPair(p.gold);
+
+  if (!bar && !orn) return null;
+
+  const base = bar || orn;
+  const ornPair = orn || { buy: base.buy * 0.968, sell: base.sell * 1.048 };
+  const barPair = bar || { buy: ornPair.buy * 1.033, sell: ornPair.sell * 0.953 };
+
+  const updated = root.update_time ?? root.updateTime ?? root.time ?? root.date ?? null;
+  const announcementTime = [root.update_date ?? root.updateDate, updated].filter(Boolean).join(' ');
+
+  return {
+    barBuy: barPair.buy,
+    barSell: barPair.sell,
+    ornBuy: ornPair.buy,
+    ornSell: ornPair.sell,
+    apiTime: announcementTime || null,
+    announcementTime: announcementTime || null,
+    announcementSeq: Number.isFinite(Number(root.seq ?? root.priceSeq)) ? Number(root.seq ?? root.priceSeq) : null,
+    goldSpot: toNumber(root.goldSpot ?? root.gold_spot),
+    usdthb: toNumber(root.bahtPerUSD ?? root.usdthb)
+  };
+}
+
+let mockDrift = 0;
+
+function mockPayload() {
+  mockDrift += (Math.random() - 0.5) * 60;
+  mockDrift = Math.max(-320, Math.min(320, mockDrift * 0.92));
+  const t = Date.now() / 60000;
+  const wave = Math.sin(t / 17) * 90 + Math.sin(t / 5.3) * 28;
+  const shift = mockDrift + wave;
+  return {
+    barBuy: Math.round(MOCK_BASE.barBuy + shift),
+    barSell: Math.round(MOCK_BASE.barSell + shift),
+    ornBuy: Math.round(MOCK_BASE.ornBuy + shift),
+    ornSell: Math.round(MOCK_BASE.ornSell + shift),
+    apiTime: null
+  };
+}
+
+function parseGoldTradersHtml(html) {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const text = (doc.body ? doc.body.textContent : '').replace(/\s+/g, ' ');
+  const number = '[\\d,]+(?:\\.\\d{1,2})?';
+  const match = pattern => {
+    const found = text.match(pattern);
+    return found ? toNumber(found[1]) : null;
+  };
+  const barBuy = match(new RegExp('ทองคำแท่ง\\s*96\\.5%?\\s*รับซื้อ\\s*(' + number + ')', 'i'));
+  const barSell = match(new RegExp('ทองคำแท่ง\\s*96\\.5%?[\\s\\S]{0,80}?ขายออก\\s*(' + number + ')', 'i'));
+  const ornBuy = match(new RegExp('ทองรูปพรรณ\\s*96\\.5%?[\\s\\S]{0,100}?(?:ฐานภาษี|รับซื้อ)\\s*(' + number + ')', 'i'));
+  const ornSell = match(new RegExp('ทองรูปพรรณ\\s*96\\.5%?[\\s\\S]{0,140}?ขายออก\\s*(' + number + ')', 'i'));
+  if ([barBuy, barSell, ornBuy, ornSell].some(value => value == null)) return null;
+
+  const announcement = text.match(/ประจำวันที่\s*(\d{1,2}\/\d{1,2}\/\d{4})\s*เวลา\s*(\d{1,2}:\d{2})\s*(?:น\.)?\s*\(ครั้งที่\s*(\d+)\)/i);
+  const xau = match(new RegExp('Gold Spot\\s*:?\\s*(' + number + ')', 'i'));
+  const usdthb = match(new RegExp('USD\\s*\\/\\s*THB\\s*:?\\s*(' + number + ')', 'i'));
+  const announcementTime = announcement ? announcement[1] + ' เวลา ' + announcement[2] : null;
+  return {
+    barBuy, barSell, ornBuy, ornSell,
+    apiTime: announcementTime,
+    announcementTime,
+    announcementSeq: announcement ? Number(announcement[3]) : null,
+    goldSpot: xau,
+    usdthb
+  };
+}
+
+function parseGoldTradersApi(payload) {
+  const row = Array.isArray(payload) ? payload[0] : payload;
+  if (!row || typeof row !== 'object') return null;
+  const barBuy = toNumber(row.bL_BuyPrice);
+  const barSell = toNumber(row.bL_SellPrice);
+  const ornBuy = toNumber(row.oM965_BuyPrice);
+  const ornSell = toNumber(row.oM965_SellPrice);
+  if ([barBuy, barSell, ornBuy, ornSell].some(value => value == null)) return null;
+  const rawTime = row.asTime || null;
+  const announcementTime = rawTime ? rawTime.replace('T', ' ').slice(0, 16) : null;
+  return {
+    barBuy, barSell, ornBuy, ornSell,
+    apiTime: announcementTime,
+    announcementTime,
+    announcementSeq: Number.isFinite(Number(row.seq)) ? Number(row.seq) : null,
+    goldSpot: toNumber(row.goldSpot),
+    usdthb: toNumber(row.bahtPerUSD),
+    otherGoldPrices: {
+      gold90: toNumber(row.oM90_BuyPrice), gold80: toNumber(row.oM80_BuyPrice),
+      gold50: toNumber(row.oM50_BuyPrice), gold40: toNumber(row.oM40_BuyPrice),
+      gold9999: toNumber(row.oM9999_BuyPrice)
+    }
+  };
+}
+
+async function fetchGoldTradersData() {
+  const targets = [
+    { url: GOLDTRADERS_HOME, parse: parseGoldTradersHtml },
+    { url: GOLDTRADERS_LATEST + '&t=' + Date.now(), parse: contents => {
+      try { return parseGoldTradersApi(JSON.parse(contents)); } catch (err) { return null; }
+    } }
+  ];
+  for (const target of targets) {
+    try {
+      const envelope = await fetchWithTimeout(ALL_ORIGINS + encodeURIComponent(target.url), CFG.PROXY_TIMEOUT);
+      if (typeof envelope.contents !== 'string') continue;
+      const data = target.parse(envelope.contents);
+      if (data) return data;
+    } catch (err) {
+      console.warn('[GoldSignal] Gold Traders scrape failed:', target.url, err && err.message);
+    }
+  }
+  return null;
+}
+
+async function fetchLiveData() {
+  const scraped = await fetchGoldTradersData();
+  if (scraped) return { data: scraped, source: 'goldtraders' };
+
+  for (const url of ENDPOINTS) {
+    try {
+      const json = await fetchWithTimeout(url + (url.includes('?') ? '&' : '?') + 't=' + Date.now(), CFG.REQUEST_TIMEOUT);
+      const parsed = parsePayload(json);
+      if (parsed) return { data: parsed, source: 'fallback' };
+    } catch (err) {
+      console.warn('[GoldSignal] fallback endpoint failed:', url, err && err.message);
+    }
+  }
+  return { data: mockPayload(), source: 'mock' };
+}
+
+async function refreshYlgQuote() {
+  try {
+    const payload = await fetchWithTimeout(CFG.YLG_API, 6000);
+    const buy = toNumber(payload && payload.bar96 && payload.bar96.tin);
+    const sell = toNumber(payload && payload.bar96 && payload.bar96.tout);
+    if (buy == null || sell == null || buy <= 0 || sell <= 0) throw new Error('รูปแบบราคาทอง YLG ไม่ถูกต้อง');
+    state.ylgQuote = { buy, sell, updated: payload.update_date || null };
+    pushYlgHistory(sell);
+    state.ylgError = null;
+  } catch (err) {
+    state.ylgQuote = null;
+    state.ylgError = err && err.message ? err.message : 'ไม่สามารถดึงข้อมูลได้';
+    console.warn('[GoldSignal] YLG reference failed:', state.ylgError);
+  }
+  renderYlgQuote();
+  updateChart();
+}
+
+function renderYlgQuote() {
+  const quote = state.ylgQuote;
+  const status = $('ylgReferenceStatus');
+  if (!quote) {
+    status.textContent = state.ylgError ? 'แหล่ง YLG ไม่พร้อมใช้งาน · ' + state.ylgError : 'กำลังดึงราคาอ้างอิงจาก YLG...';
+    $('ylgBuy').textContent = '—';
+    $('ylgSell').textContent = '—';
+    $('ylgBuyDiff').textContent = 'เทียบสมาคม —';
+    $('ylgSellDiff').textContent = 'เทียบสมาคม —';
+    return;
+  }
+
+  const timestamp = quote.updated ? new Date(quote.updated.replace(' ', 'T')) : null;
+  status.textContent = 'ราคาเสนอของ YLG · อัปเดต ' + (timestamp && !Number.isNaN(timestamp.getTime()) ? dateTimeLabel(timestamp.getTime()) : 'เวลาที่ API ระบุ');
+  $('ylgBuy').textContent = fmt0(quote.buy);
+  $('ylgSell').textContent = fmt0(quote.sell);
+  const hasRealAssociationPrice = state.data && ['goldtraders', 'fallback', 'api'].includes(state.source);
+  $('ylgBuyDiff').textContent = hasRealAssociationPrice
+    ? 'เทียบสมาคม ' + signed(quote.buy - state.data.barBuy, 0)
+    : 'เทียบสมาคม —';
+  $('ylgSellDiff').textContent = hasRealAssociationPrice
+    ? 'เทียบสมาคม ' + signed(quote.sell - state.data.barSell, 0)
+    : 'เทียบสมาคม —';
+}
+
+/* ---------------- History storage ---------------- */
+
+function loadHistory() {
+  try {
+    const raw = localStorage.getItem(CFG.HISTORY_KEY);
+    const arr = raw ? JSON.parse(raw) : [];
+    if (Array.isArray(arr)) {
+      state.history = arr.filter(h => h && !h.seed && Number.isFinite(h.price)).slice(-CFG.MAX_HISTORY);
+    }
+  } catch (e) {
+    state.history = [];
+  }
+}
+
+function saveHistory() {
+  try {
+    localStorage.setItem(CFG.HISTORY_KEY, JSON.stringify(state.history.slice(-CFG.MAX_HISTORY)));
+  } catch (e) { /* โหมดส่วนตัว / พื้นที่เต็ม — ข้ามไป */ }
+}
+
+function loadYlgHistory() {
+  try {
+    const raw = localStorage.getItem(CFG.YLG_HISTORY_KEY);
+    const arr = raw ? JSON.parse(raw) : [];
+    if (Array.isArray(arr)) {
+      state.ylgHistory = arr.filter(point => point && Number.isFinite(point.t) && Number.isFinite(point.price) && point.price > 0).slice(-CFG.MAX_HISTORY);
+      if (state.ylgHistory.length !== arr.length) saveYlgHistory();
+    }
+  } catch (e) {
+    state.ylgHistory = [];
+  }
+}
+
+function saveYlgHistory() {
+  try {
+    localStorage.setItem(CFG.YLG_HISTORY_KEY, JSON.stringify(state.ylgHistory.slice(-CFG.MAX_HISTORY)));
+  } catch (e) { /* โหมดส่วนตัว / พื้นที่เต็ม — ข้ามได้ */ }
+}
+
+function pushYlgHistory(price) {
+  const last = state.ylgHistory[state.ylgHistory.length - 1];
+  if (last && Math.abs(last.price - price) < 0.01) return;
+  state.ylgHistory.push({ t: Date.now(), price });
+  if (state.ylgHistory.length > CFG.MAX_HISTORY) state.ylgHistory = state.ylgHistory.slice(-CFG.MAX_HISTORY);
+  saveYlgHistory();
+}
+
+function startHistory(price) {
+  state.history = [{ t: Date.now(), price, seed: false }];
+}
+
+function pushHistory(price) {
+  state.history.push({ t: Date.now(), price, seed: false });
+  if (state.history.length > CFG.MAX_HISTORY) state.history = state.history.slice(-CFG.MAX_HISTORY);
+  return true;
+}
+
+/* ---------------- Daily series (ฐานข้อมูลสำหรับพยากรณ์) ---------------- */
+
+function dateKey(d) {
+  const dt = d || new Date();
+  return dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0') + '-' + String(dt.getDate()).padStart(2, '0');
+}
+
+/** ตลาดทองคำไทยหยุดเสาร์-อาทิตย์ (ยังไม่รวมวันหยุดนักขัตฤกษ์) */
+function isTradingDay(d) {
+  const day = d.getDay();
+  return day !== 0 && day !== 6;
+}
+
+function loadDaily() {
+  try {
+    const raw = localStorage.getItem(CFG.DAILY_KEY);
+    const arr = raw ? JSON.parse(raw) : [];
+    if (Array.isArray(arr)) {
+      state.daily = arr.filter(x => x && x.date && Number.isFinite(x.close)).slice(-420);
+    }
+  } catch (e) {
+    state.daily = [];
+  }
+}
+
+function saveDaily() {
+  try {
+    localStorage.setItem(CFG.DAILY_KEY, JSON.stringify(state.daily.slice(-420)));
+  } catch (e) { /* ข้ามได้ */ }
+}
+
+/** อัปเดตราคาปิดของวันนี้ด้วยราคาล่าสุดจาก API */
+function upsertTodayClose(price) {
+  const key = dateKey();
+  const last = state.daily[state.daily.length - 1];
+  if (last && last.date === key && !last.synthetic) last.close = price;
+  else state.daily.push({ date: key, close: price });
+  saveDaily();
+}
+
+/**
+ * สร้างชุดข้อมูลรายวันจำลอง เพื่อให้โมเดลพยากรณ์ทำงานได้ตั้งแต่เปิดใช้ครั้งแรก
+ * (จะถูกแทนที่ด้วยข้อมูลจริงเมื่อใช้งานต่อเนื่องครบ ~15 วันทําการ)
+ */
+function bootstrapDaily(price) {
+  const real = state.daily.filter(d => !d.synthetic);
+  const synth = state.daily.filter(d => d.synthetic);
+
+  if (real.length >= 15) {
+    if (synth.length) { state.daily = real; saveDaily(); }
+    return;
+  }
+  if (synth.length >= 20) return; /* มีชุดจำลองอยู่แล้ว ใช้ชุดเดิมแบบ deterministic */
+
+  const out = [];
+  const today = new Date();
+  let v = price;
+  for (let i = CFG.BOOTSTRAP_DAYS; i >= 1; i--) {
+    const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() - i);
+    if (!isTradingDay(d)) continue;
+    const drift = (Math.random() - 0.51) * CFG.DAILY_VOL * 1.9;
+    v = v / (1 + drift);
+    out.push({ date: dateKey(d), close: Math.round(v), synthetic: true });
+  }
+  state.daily = out.concat(real);
+  saveDaily();
+}
+
+/* ---------------- Forecast engine ---------------- */
+
+/** ความชัน (log-return ต่อแท่ง) จาก linear regression */
+function linSlopePct(values, n) {
+  const arr = values.slice(-n);
+  const m = arr.length;
+  if (m < 5) return 0;
+  let sx = 0, sy = 0, sxy = 0, sxx = 0;
+  for (let i = 0; i < m; i++) {
+    const x = i, y = Math.log(arr[i]);
+    sx += x; sy += y; sxy += x * y; sxx += x * x;
+  }
+  const denom = m * sxx - sx * sx;
+  if (!denom) return 0;
+  return (m * sxy - sx * sy) / denom;
+}
+
+/** ความน่าจะเป็นแบบ logistic */
+const probUp = z => 1 / (1 + Math.exp(-z * 1.7));
+
+function buildForecast() {
+  const series = state.daily.filter(d => Number.isFinite(d.close) && d.close > 0);
+  if (series.length < 10) return null;
+
+  const closes = series.map(d => d.close);
+  const last = closes[closes.length - 1];
+  const sma20 = calcSMA(closes, 20);
+  const rsi = calcRSI(closes, CFG.RSI_PERIOD);
+  const slope = linSlopePct(closes, 20);
+
+  const rets = [];
+  for (let i = Math.max(1, closes.length - 30); i < closes.length; i++) rets.push(Math.log(closes[i] / closes[i - 1]));
+  let sigma = stddev(rets);
+  if (!Number.isFinite(sigma) || sigma <= 0) sigma = CFG.DAILY_VOL;
+  sigma = clamp(sigma, 0.002, 0.03);
+
+  const trendDaily = clamp(slope, -0.005, 0.005);
+  const momentumDaily = clamp(((50 - (rsi == null ? 50 : rsi)) / 50) * 0.0028, -0.0028, 0.0028);
+
+  /* ระดับดุลยภาพระยะสั้น = ค่าเฉลี่ย 20 วัน ต่อด้วยแนวโน้ม — ราคาจะถูกดึงเข้าหาระดับนี้ */
+  const equilibrium = (sma20 || last) * (1 + trendDaily * 6);
+  const KAPPA = 0.26;
+
+  const horizon = state.forecastDays;
+  const days = [];
+  let price = last;
+  const cursor = new Date();
+  cursor.setHours(0, 0, 0, 0);
+
+  let guard = 0;
+  while (days.length < horizon && guard < horizon * 4) {
+    guard++;
+    cursor.setDate(cursor.getDate() + 1);
+    if (!isTradingDay(cursor)) continue;
+
+    const step = days.length;
+    const decay = 1 - step / (horizon + 2);
+    /* แรงดึงกลับเข้าดุลยภาพ (OU) + โมเมนตัมที่ค่อย ๆ หมดแรงลงเมื่อเวลาผ่านไป */
+    const pull = clamp(KAPPA * Math.log(equilibrium / price), -0.005, 0.005);
+    /* shrink 0.65 = ลดความมั่นใจในทิศทางลง (shrinkage) เพื่อไม่ให้พยากรณ์แรงเกินจริง */
+    const mu = clamp((pull + momentumDaily * decay * decay) * 0.65, -0.006, 0.006);
+
+    price = price * (1 + mu);
+    const cumSigma = sigma * Math.sqrt(step + 1);
+
+    days.push({
+      date: new Date(cursor),
+      price,
+      low: price * (1 - CFG.CONFIDENCE_Z * cumSigma),
+      high: price * (1 + CFG.CONFIDENCE_Z * cumSigma),
+      changePct: mu * 100,
+      cumChangePct: ((price - last) / last) * 100,
+      pUp: clamp(probUp(mu / sigma) * 100, 3, 97),
+      up: mu >= 0
+    });
+  }
+
+  if (!days.length) return null;
+
+  const totalRet = (price - last) / last;
+  const totalSigma = sigma * Math.sqrt(days.length);
+  const trendProb = clamp(probUp(totalRet / totalSigma) * 100, 4, 96);
+
+  let bestUp = days[0], bestDown = days[0];
+  days.forEach(d => {
+    if (d.pUp > bestUp.pUp) bestUp = d;
+    if (d.pUp < bestDown.pUp) bestDown = d;
+  });
+
+  return {
+    last, sma20, rsi, sigma, slope, days, bestUp, bestDown,
+    endPrice: price,
+    trendProb,
+    totalRetPct: totalRet * 100,
+    up: totalRet >= 0,
+    hasSynthetic: series.some(d => d.synthetic),
+    realDays: series.filter(d => !d.synthetic).length
+  };
+}
+
+/* ---------------- Rendering ---------------- */
+
+const TONE = {
+  emerald: { text: 'text-emerald-400', chip: 'bg-emerald-500/12 border-emerald-500/30', emoji: '🟢' },
+  rose: { text: 'text-rose-400', chip: 'bg-rose-500/12 border-rose-500/30', emoji: '🔴' },
+  amber: { text: 'text-amber-300', chip: 'bg-amber-500/12 border-amber-500/30', emoji: '🟡' }
+};
+
+function setDelta(el, diff) {
+  if (diff == null || !isFinite(diff)) { el.textContent = '—'; el.className = el.className.replace(/text-(emerald|rose|slate)-\d+/g, 'text-slate-500'); return; }
+  el.classList.remove('text-emerald-400', 'text-rose-400', 'text-slate-500');
+  if (diff > 0) { el.classList.add('text-emerald-400'); el.textContent = '▲ ' + signed(diff, 0) + ' จากครั้งก่อน'; }
+  else if (diff < 0) { el.classList.add('text-rose-400'); el.textContent = '▼ ' + fmt0(Math.abs(diff)) + ' จากครั้งก่อน'; }
+  else { el.classList.add('text-slate-500'); el.textContent = 'คงที่'; }
+}
+
+function flashCard(el, up) {
+  el.classList.remove('flash-up', 'flash-down');
+  void el.offsetWidth;
+  el.classList.add(up ? 'flash-up' : 'flash-down');
+}
+
+function renderPrices() {
+  const d = state.data;
+  if (!d) return;
+
+  $('barBuy').textContent = fmt0(d.barBuy);
+  $('barSell').textContent = fmt0(d.barSell);
+  $('ornBuy').textContent = fmt0(d.ornBuy);
+  $('ornSell').textContent = fmt0(d.ornSell);
+
+  const diff = arr => {
+    if (arr.length < 2) return null;
+    return arr[arr.length - 1] - arr[arr.length - 2];
+  };
+  const hist = state.history.filter(h => !h.seed);
+  setDelta($('barBuyDelta'), diff(hist.map(h => h.price)));
+  setDelta($('barSellDelta'), diff(hist.map(h => h.price)));
+  setDelta($('ornBuyDelta'), diff(hist.map(h => h.price)));
+  setDelta($('ornSellDelta'), diff(hist.map(h => h.price)));
+
+  const spreadBar = d.barSell - d.barBuy;
+  const spreadOrn = d.ornSell - d.ornBuy;
+  $('spreadBar').textContent = fmt0(spreadBar) + ' บาท (' + fmt2((spreadBar / d.barBuy) * 100) + '%)';
+  $('spreadOrn').textContent = fmt0(spreadOrn) + ' บาท (' + fmt2((spreadOrn / d.ornBuy) * 100) + '%)';
+}
+
+function renderAnalysis() {
+  const a = state.analysis;
+  if (!a) return;
+  const tone = TONE[a.signal.tone];
+
+  $('signalEmoji').textContent = a.signal.emoji;
+  $('signalLabel').textContent = a.signal.label;
+  $('signalLabel').className = 'font-display text-lg font-semibold sm:text-xl ' + tone.text;
+  $('signalHeader').className = 'flex flex-wrap items-center justify-between gap-3 border-b px-5 py-4 ' + tone.chip;
+  $('confidence').textContent = a.confidence + '%';
+
+  $('signalReason').textContent = a.reasons.slice(0, 3).join(' · ');
+
+  $('rsiValue').textContent = a.rsi == null ? '—' : fmt2(a.rsi) + (a.rsi < 30 ? ' (Oversold)' : a.rsi > 70 ? ' (Overbought)' : '');
+  $('rsiValue').className = 'num font-semibold ' + (a.rsi == null ? 'text-slate-200' : a.rsi < 30 ? 'text-emerald-400' : a.rsi > 70 ? 'text-rose-400' : 'text-amber-300');
+  const pct = a.rsi == null ? 0 : Math.max(0, Math.min(100, a.rsi));
+  $('rsiMarker').style.left = 'calc(' + pct + '% - 3px)';
+
+  $('smaFast').textContent = fmt0(a.smaFast);
+  $('smaSlow').textContent = fmt0(a.smaSlow);
+  $('supportVal').textContent = fmt0(a.support);
+  $('resistanceVal').textContent = fmt0(a.resistance);
+  $('volatility').textContent = '±' + fmt2(a.vol) + '% / รอบ';
+
+  $('targetBuy').textContent = fmt0(a.targetBuy);
+  $('targetSell').textContent = fmt0(a.targetSell);
+  $('targetBuyDist').textContent = 'ห่างจากราคาปัจจุบัน ' + fmt2(a.targetBuyDist) + '%';
+  $('targetSellDist').textContent = 'ห่างจากราคาปัจจุบัน +' + fmt2(a.targetSellDist) + '%';
+  $('expectedRoi').textContent = '+' + fmt2(a.roi) + '%';
+  $('riskReward').textContent = '1 : ' + fmt2(a.rr);
+  $('stopLoss').textContent = fmt0(a.stopLoss);
+  renderSentiment(a);
+  renderRiskMatrix();
+}
+
+function renderHistoryTable() {
+  const rows = state.history.slice(-12).reverse();
+  const body = $('historyBody');
+  if (!rows.length) {
+    body.innerHTML = '<tr><td colspan="4" class="px-3 py-6 text-center text-slate-600">ยังไม่มีข้อมูล</td></tr>';
+    return;
+  }
+  body.innerHTML = rows.map((h, i) => {
+    const older = rows[i + 1];
+    const d = older ? h.price - older.price : 0;
+    const dp = older ? (d / older.price) * 100 : 0;
+    const cls = d > 0 ? 'text-emerald-400' : d < 0 ? 'text-rose-400' : 'text-slate-500';
+    const badge = h.seed ? '<span class="ml-1 rounded bg-white/5 px-1 py-0.5 text-[9px] text-slate-500">seed</span>' : '';
+    return '<tr>' +
+      '<td class="px-3 py-2 text-slate-400">' + dateTimeLabel(h.t) + badge + '</td>' +
+      '<td class="num px-3 py-2 text-right text-slate-200">' + fmt0(h.price) + '</td>' +
+      '<td class="num px-3 py-2 text-right ' + cls + '">' + (d === 0 ? '—' : signed(d, 0)) + '</td>' +
+      '<td class="num px-3 py-2 text-right ' + cls + '">' + (d === 0 ? '—' : signed(dp, 2) + '%') + '</td>' +
+      '</tr>';
+  }).join('');
+}
+
+function updateSourceUI() {
+  const isOfficial = state.source === 'goldtraders' || state.source === 'api';
+  const isFallback = state.source === 'fallback';
+  $('sourceDot').className = 'pulse-dot h-2.5 w-2.5 rounded-full ' + (isOfficial ? 'bg-emerald-400' : isFallback ? 'bg-sky-400' : 'bg-amber-400');
+  $('sourceLabel').textContent = isOfficial ? 'ข้อมูลจริง · สมาคมค้าทองคำ' : isFallback ? 'ข้อมูลสำรอง · Thai Gold API' : 'โหมดจำลอง (ทุก API ไม่ตอบสนอง)';
+  $('lastUpdated').textContent = 'อัปเดตล่าสุด ' + (state.lastUpdated ? dateTimeLabel(state.lastUpdated) : '—');
+  const announcement = state.data && state.data.announcementTime;
+  const sequence = state.data && state.data.announcementSeq;
+  $('announcementInfo').textContent = announcement
+    ? 'ประกาศสมาคม ' + announcement + (sequence ? ' (ครั้งที่ ' + sequence + ')' : '')
+    : 'ประกาศสมาคม —';
+
+  const banner = $('statusBanner');
+  if (isOfficial) {
+    banner.className = 'mt-4 rounded-xl border border-emerald-500/25 bg-emerald-500/8 px-4 py-2.5 text-xs text-emerald-300';
+    banner.textContent = 'อ่านข้อมูลจากเว็บไซต์สมาคมค้าทองคำสำเร็จ — ระบบอัปเดตอัตโนมัติทุก ' + CFG.REFRESH_SEC + ' วินาที';
+  } else if (isFallback) {
+    banner.className = 'mt-4 rounded-xl border border-sky-500/25 bg-sky-500/8 px-4 py-2.5 text-xs text-sky-300';
+    banner.textContent = 'Proxy/เว็บไซต์สมาคมไม่พร้อมใช้งาน — กำลังใช้ Thai Gold API สำรองจริง';
+  } else {
+    banner.className = 'mt-4 rounded-xl border border-amber-500/25 bg-amber-500/8 px-4 py-2.5 text-xs text-amber-300';
+    banner.textContent = 'API สมาคมและแหล่งสำรองไม่ตอบสนอง — ข้อมูลที่เห็นเป็นข้อมูลจำลอง ไม่ใช่ราคาตลาด';
+  }
+  banner.classList.remove('hidden');
+}
+
+/* ---------------- Forecast rendering ---------------- */
+
+function dateLabels(d) {
+  return {
+    weekday: d.toLocaleDateString('th-TH', { weekday: 'short' }),
+    full: d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })
+  };
+}
+
+function renderForecast() {
+  const f = state.forecast = buildForecast();
+  const body = $('forecastBody');
+
+  if (!f) {
+    body.innerHTML = '<tr><td colspan="5" class="px-3 py-6 text-center text-slate-600">ยังมีข้อมูลรายวันไม่เพียงพอ</td></tr>';
+    return;
+  }
+
+  const fdays = f.days;
+  const end = fdays[fdays.length - 1];
+
+  /* ---- สรุปภาพรวม ---- */
+  $('fcTrend').textContent = f.up ? 'ขาขึ้น' : 'ขาลง';
+  $('fcTrend').className = 'num mt-0.5 font-display text-xl font-semibold ' + (f.up ? 'text-emerald-400' : 'text-rose-400');
+  $('fcTrendProb').textContent = 'โอกาสเป็นจริง ' + fmt0(f.up ? f.trendProb : 100 - f.trendProb) + '% · ' + fdays.length + ' วันทําการ';
+
+  $('fcEndDate').textContent = dateLabels(end.date).full;
+  $('fcEndPrice').textContent = fmt0(end.price);
+  $('fcEndPrice').className = 'num mt-0.5 font-display text-xl font-semibold ' + (f.up ? 'text-emerald-400' : 'text-rose-400');
+  $('fcEndChg').textContent = signed(f.totalRetPct, 2) + '% จากราคาวันนี้';
+
+  $('fcBestUp').textContent = dateLabels(f.bestUp.date).weekday + ' ' + dateLabels(f.bestUp.date).full;
+  $('fcBestUpVal').textContent = 'โอกาสขึ้น ' + fmt0(f.bestUp.pUp) + '% · ' + fmt0(f.bestUp.price) + ' บาท';
+
+  $('fcBestDown').textContent = dateLabels(f.bestDown.date).weekday + ' ' + dateLabels(f.bestDown.date).full;
+  $('fcBestDownVal').textContent = 'โอกาสขึ้น ' + fmt0(f.bestDown.pUp) + '% · ' + fmt0(f.bestDown.price) + ' บาท';
+
+  /* ---- ประโยคสรุปแบบอ่านง่าย ระบุวันที่ชัดเจน ---- */
+  const shortDate = d => d.date.toLocaleDateString('th-TH', { weekday: 'short', day: 'numeric', month: 'short' });
+  const upList = fdays.filter(d => d.up).map(shortDate);
+  const downList = fdays.filter(d => !d.up).map(shortDate);
+  let verdict;
+  if (!downList.length) {
+    verdict = 'คาดว่าราคาจะปรับขึ้นทุกวันทำการ — วันที่ ' + shortDate(f.bestUp) +
+      ' มีโอกาสขึ้นสูงสุด ' + fmt0(f.bestUp.pUp) + '% (ราคาเป้าหมาย ' + fmt0(f.bestUp.price) + ' บาท)';
+  } else if (!upList.length) {
+    verdict = 'คาดว่าราคาจะปรับลงทุกวันทำการ — วันที่ ' + shortDate(f.bestDown) +
+      ' มีโอกาสลงสูงสุด ' + fmt0(100 - f.bestDown.pUp) + '% (ราคาเป้าหมาย ' + fmt0(f.bestDown.price) + ' บาท)';
+  } else {
+    verdict = 'วันที่มีโอกาส<b>ขึ้น</b>: ' + upList.join(' · ') +
+      ' <span class="text-slate-500">|</span> วันที่มีโอกาส<b>ลง</b>: ' + downList.join(' · ');
+  }
+  $('fcVerdict').innerHTML = verdict;
+
+  const note = $('fcNote');
+  note.textContent = f.hasSynthetic
+    ? 'อ้างอิงชุดข้อมูลรายวันจําลอง + ราคาจริง ' + f.realDays + ' วัน — จะเปลี่ยนไปใช้ข้อมูลจริงทั้งหมดเมื่อสะสมครบ ~15 วันทําการ'
+    : 'ใช้ข้อมูลราคาจริงสะสม ' + f.realDays + ' วันทําการ · ความผันผวนที่ใช้อ้างอิง ±' + fmt2(f.sigma * 100) + '% ต่อวัน';
+
+  /* ---- ตารางรายวัน ---- */
+  body.innerHTML = fdays.map((d, i) => {
+    const l = dateLabels(d.date);
+    const cls = d.up ? 'text-emerald-400' : 'text-rose-400';
+    let badge = '';
+    if (d === f.bestUp && f.bestUp !== f.bestDown) {
+      badge = '<span class="ml-1.5 rounded bg-emerald-500/15 px-1.5 py-0.5 text-[9px] text-emerald-300">น่าจับตาขึ้น</span>';
+    } else if (d === f.bestDown) {
+      badge = '<span class="ml-1.5 rounded bg-rose-500/15 px-1.5 py-0.5 text-[9px] text-rose-300">น่าจับตาลง</span>';
+    }
+    return '<tr>' +
+      '<td class="px-3 py-2.5"><div class="text-slate-200">' + l.weekday + ' ' + l.full + badge + '</div>' +
+        '<div class="text-[10px] text-slate-500">วันที่ ' + (i + 1) + ' ของการพยากรณ์</div></td>' +
+      '<td class="px-3 py-2.5 text-center"><span class="rounded-md px-2 py-0.5 text-[11px] font-semibold ' +
+        (d.up ? 'bg-emerald-500/15 text-emerald-300' : 'bg-rose-500/15 text-rose-300') + '">' +
+        (d.up ? '▲ ขึ้น' : '▼ ลง') + '</span></td>' +
+      '<td class="num px-3 py-2.5 text-right text-slate-100">' + fmt0(d.price) + '</td>' +
+      '<td class="num px-3 py-2.5 text-right text-slate-400">' + fmt0(d.low) + ' – ' + fmt0(d.high) + '</td>' +
+      '<td class="num px-3 py-2.5 text-right ' + cls + '">' + fmt2(d.changePct) + '%</td>' +
+      '<td class="px-3 py-2.5">' +
+        '<div class="flex items-center gap-2">' +
+          '<div class="h-1.5 w-14 overflow-hidden rounded-full bg-white/10">' +
+            '<div class="h-full rounded-full ' + (d.up ? 'bg-emerald-400' : 'bg-rose-400') + '" style="width:' + clamp(d.pUp, 0, 100).toFixed(0) + '%"></div>' +
+          '</div>' +
+          '<span class="num text-[11px] ' + cls + '">' + fmt0(d.pUp) + '%</span>' +
+        '</div>' +
+      '</td>' +
+    '</tr>';
+  }).join('');
+
+  updateForecastChart(f);
+}
+
+function renderAll() {
+  renderPrices();
+  renderAnalysis();
+  renderHistoryTable();
+  updateSourceUI();
+  updateChart();
+  renderForecast();
+  renderCalculator();
+  renderBreakEven();
+  renderJournal();
+  renderAlerts();
+  renderAlertHint();
+}
+/* ---------------- Chart ---------------- */
+
+let chart = null;
+
+function initChart() {
+  const canvas = $('priceChart');
+  if (!canvas || typeof Chart === 'undefined') return;
+  const ctx = canvas.getContext('2d');
+  const grad = ctx.createLinearGradient(0, 0, 0, 300);
+  grad.addColorStop(0, 'rgba(212,175,55,.38)');
+  grad.addColorStop(0.55, 'rgba(212,175,55,.10)');
+  grad.addColorStop(1, 'rgba(212,175,55,0)');
+
+  Chart.defaults.font.family = '"Noto Sans Thai", sans-serif';
+  Chart.defaults.color = '#7c8899';
+
+  chart = new Chart(ctx, {
+    type: 'line',
+    data: { labels: [], datasets: [
+      { label: 'สมาคมฯ 96.5% (ขายออก)', data: [], borderColor: '#D4AF37', backgroundColor: grad, fill: true, tension: 0.3, spanGaps: true, borderWidth: 2, pointRadius: 1.5, pointHoverRadius: 4, pointHoverBackgroundColor: '#D4AF37' },
+      { label: 'YLG 96.5% (ขายออก)', data: [], borderColor: '#2dd4bf', backgroundColor: 'transparent', fill: false, tension: 0.3, spanGaps: true, borderWidth: 2, pointRadius: 2, pointHoverRadius: 4 },
+      { label: 'Fair Price · Spot/FX', data: [], borderColor: '#38bdf8', backgroundColor: 'transparent', fill: false, tension: 0.2, spanGaps: true, borderWidth: 1.6, borderDash: [4, 3], pointRadius: 2, pointHoverRadius: 4 },
+      { label: 'SMA 5 · สมาคมฯ', data: [], borderColor: '#a78bfa', borderWidth: 1.4, tension: 0.2, spanGaps: true, pointRadius: 0 },
+      { label: 'SMA 20 · สมาคมฯ', data: [], borderColor: '#f97316', borderWidth: 1.4, tension: 0.2, spanGaps: true, pointRadius: 0 },
+      { label: 'แนวต้าน', data: [], borderColor: 'rgba(244,63,94,.75)', borderWidth: 1, borderDash: [6, 5], spanGaps: true, pointRadius: 0 },
+      { label: 'แนวรับ', data: [], borderColor: 'rgba(34,197,94,.75)', borderWidth: 1, borderDash: [6, 5], spanGaps: true, pointRadius: 0 }
+    ] },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      animation: { duration: 450 },
+      plugins: {
+        legend: {
+          display: true,
+          position: 'bottom',
+          labels: { color: '#94a3b8', boxWidth: 12, boxHeight: 2, padding: 14, usePointStyle: true, pointStyle: 'line', font: { size: 10 } }
+        },
+        tooltip: {
+          backgroundColor: 'rgba(11,16,23,.95)',
+          borderColor: 'rgba(212,175,55,.35)',
+          borderWidth: 1,
+          padding: 10,
+          titleColor: '#e2e8f0',
+          bodyColor: '#cbd5e1',
+          callbacks: {
+            label: c => {
+              if (c.parsed.y == null) return null;
+              const timestamp = c.chart.$timestamps && c.chart.$timestamps[c.dataIndex];
+              const bar = c.datasetIndex === 0 && timestamp != null && c.chart.$ohlcByTime
+                ? c.chart.$ohlcByTime.get(timestamp)
+                : null;
+              const line = c.dataset.label + ': ' + fmt0(c.parsed.y) + ' บาท';
+              return bar && bar.official
+                ? line + ' · O ' + fmt0(bar.open) + ' H ' + fmt0(bar.high) + ' L ' + fmt0(bar.low) + ' C ' + fmt0(bar.price)
+                : line;
+            }
+          }
+        }
+      },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,.04)' }, ticks: { maxTicksLimit: 8, font: { size: 10 } }, border: { display: false } },
+        y: {
+          position: 'right',
+          grid: { color: 'rgba(255,255,255,.05)' },
+          border: { display: false },
+          ticks: { font: { size: 10 }, callback: v => fmt0(v) }
+        }
+      }
+    }
+  });
+}
+
+function updateChart() {
+  if (!chart) return;
+  const cutoff = state.range ? Date.now() - state.range : 0;
+  const officialPoints = state.officialOhlc.filter(point => point.t >= cutoff);
+  const latestOfficialTime = state.officialOhlc.length ? state.officialOhlc[state.officialOhlc.length - 1].t : 0;
+  const livePoints = state.history
+    .filter(point => !point.seed && point.t >= cutoff && point.t > latestOfficialTime)
+    .map(point => ({ ...point, open: point.price, high: point.price, low: point.price }));
+  const associationObservations = [...officialPoints, ...livePoints]
+    .sort((left, right) => left.t - right.t);
+  const association = associationObservations.filter((point, index) =>
+    index === 0 || point.price !== associationObservations[index - 1].price ||
+      point.high !== associationObservations[index - 1].high ||
+      point.low !== associationObservations[index - 1].low
+  );
+  const ylg = state.ylgHistory.filter(point => point.t >= cutoff);
+  const fairHistory = state.macroSnaps
+    .filter(point => point.t >= cutoff && Number.isFinite(point.xau) && Number.isFinite(point.usdthb))
+    .map(point => ({ t: point.t, price: fairThaiPrice(point.xau, point.usdthb) }))
+    .filter(point => Number.isFinite(point.price));
+  const associationByTime = new Map(association.map(point => [point.t, point.price]));
+  const ylgByTime = new Map(ylg.map(point => [point.t, point.price]));
+  const fairByTime = new Map(fairHistory.map(point => [point.t, point.price]));
+  const timestamps = [...new Set([...associationByTime.keys(), ...ylgByTime.keys(), ...fairByTime.keys()])].sort((left, right) => left - right);
+  const fast = rollingSMA(association.map(point => point.price), CFG.SMA_FAST);
+  const slow = rollingSMA(association.map(point => point.price), CFG.SMA_SLOW);
+  const fastByTime = new Map(association.map((point, index) => [point.t, fast[index]]));
+  const slowByTime = new Map(association.map((point, index) => [point.t, slow[index]]));
+  const support = association.length ? Math.min(...association.map(point => Number.isFinite(point.low) ? point.low : point.price)) : null;
+  const resistance = association.length ? Math.max(...association.map(point => Number.isFinite(point.high) ? point.high : point.price)) : null;
+  const alignLatestKnown = series => {
+    const ordered = [...series.entries()].sort((left, right) => left[0] - right[0]);
+    let cursor = 0;
+    let latest = null;
+    return timestamps.map(timestamp => {
+      while (cursor < ordered.length && ordered[cursor][0] <= timestamp) {
+        if (Number.isFinite(ordered[cursor][1])) latest = ordered[cursor][1];
+        cursor++;
+      }
+      return latest;
+    });
+  };
+
+  const labels = timestamps.map(timestamp => state.range > 86400000 ? dateTimeLabel(timestamp) : timeLabel(timestamp));
+  const duplicateLabels = new Set(labels).size !== labels.length;
+  chart.data.labels = duplicateLabels
+    ? timestamps.map(timestamp => new Date(timestamp).toLocaleString('th-TH', {
+      day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+    }))
+    : labels;
+  chart.$timestamps = timestamps;
+  chart.$ohlcByTime = new Map(association.map(point => [point.t, point]));
+  chart.data.datasets[0].data = alignLatestKnown(associationByTime);
+  chart.data.datasets[1].data = alignLatestKnown(ylgByTime);
+  chart.data.datasets[2].data = alignLatestKnown(fairByTime);
+  chart.data.datasets[3].data = alignLatestKnown(fastByTime);
+  chart.data.datasets[4].data = alignLatestKnown(slowByTime);
+  chart.data.datasets[5].data = timestamps.map(() => resistance);
+  chart.data.datasets[6].data = timestamps.map(() => support);
+
+  const visiblePrices = [
+    ...association.map(point => point.price), ...ylg.map(point => point.price),
+    ...association.flatMap(point => [point.low, point.high]).filter(Number.isFinite),
+    ...fairHistory.map(point => point.price), ...fast.filter(Number.isFinite), ...slow.filter(Number.isFinite)
+  ];
+  if (visiblePrices.length) {
+    const low = Math.min(...visiblePrices);
+    const high = Math.max(...visiblePrices);
+    const padding = Math.max((high - low) * 0.05, 100);
+    chart.options.scales.y.min = Math.floor((low - padding) / 100) * 100;
+    chart.options.scales.y.max = Math.ceil((high + padding) / 100) * 100;
+  } else {
+    delete chart.options.scales.y.min;
+    delete chart.options.scales.y.max;
+  }
+  chart.update();
+}
+
+let forecastChart = null;
+
+function initForecastChart() {
+  const canvas = $('forecastChart');
+  if (!canvas || typeof Chart === 'undefined') return;
+
+  forecastChart = new Chart(canvas.getContext('2d'), {
+    type: 'bar',
+    data: { labels: [], datasets: [{
+      label: 'เปลี่ยนแปลงคาดการณ์ (%)',
+      data: [],
+      backgroundColor: [],
+      borderRadius: 6,
+      borderSkipped: false,
+      maxBarThickness: 42
+    }] },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(11,16,23,.95)',
+          borderColor: 'rgba(212,175,55,.35)',
+          borderWidth: 1,
+          padding: 10,
+          callbacks: {
+            title: items => items[0].label,
+            label: c => 'คาดการณ์ ' + (c.parsed.y >= 0 ? '+' : '') + fmt2(c.parsed.y) + '%'
+          }
+        }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 10 }, maxRotation: 0, autoSkip: false }, border: { display: false } },
+        y: {
+          grid: { color: 'rgba(255,255,255,.05)' },
+          border: { display: false },
+          ticks: { font: { size: 10 }, callback: v => (v > 0 ? '+' : '') + v + '%' }
+        }
+      }
+    }
+  });
+}
+
+function updateForecastChart(f) {
+  if (!forecastChart || !f) return;
+  forecastChart.data.labels = f.days.map(d => {
+    const l = dateLabels(d.date);
+    return l.weekday + ' ' + d.date.getDate();
+  });
+  forecastChart.data.datasets[0].data = f.days.map(d => d.cumChangePct);
+  forecastChart.data.datasets[0].backgroundColor = f.days.map(d =>
+    d.up ? 'rgba(52,211,153,.75)' : 'rgba(251,113,133,.75)');
+  forecastChart.update();
+}
+
+/* ---------------- Personal profit calculator ---------------- */
+
+function selectedType() {
+  const el = document.querySelector('input[name="calcType"]:checked');
+  return el ? el.value : 'bar';
+}
+
+function renderCalculator() {
+  const d = state.data;
+  const buyPrice = toNumber($('calcBuyPrice').value);
+  const weight = toNumber($('calcWeight').value);
+
+  const pnlEl = $('calcPnl');
+  const pnlPctEl = $('calcPnlPct');
+
+  if (!d) return;
+
+  if (!buyPrice || !weight || weight <= 0) {
+    pnlEl.textContent = '0';
+    pnlEl.className = 'num mt-1 font-display text-3xl font-semibold text-slate-400';
+    pnlPctEl.textContent = '0.00%';
+    pnlPctEl.className = 'num text-sm font-semibold text-slate-400';
+    $('calcCost').textContent = '—';
+    $('calcValue').textContent = '—';
+    $('calcGram').textContent = '—';
+    $('calcHint').classList.add('hidden');
+    return;
+  }
+
+  const type = selectedType();
+  const sellPrice = type === 'bar' ? d.barSell : d.ornSell;
+  const cost = buyPrice * weight;
+  const value = sellPrice * weight;
+  const pnl = value - cost;
+  const pnlPct = (pnl / cost) * 100;
+  const win = pnl >= 0;
+
+  pnlEl.textContent = (win ? '+' : '−') + fmt0(Math.abs(pnl));
+  pnlEl.className = 'num mt-1 font-display text-3xl font-semibold ' + (win ? 'text-emerald-400' : 'text-rose-400');
+  pnlPctEl.textContent = (win ? '+' : '') + fmt2(pnlPct) + '%';
+  pnlPctEl.className = 'num text-sm font-semibold ' + (win ? 'text-emerald-400' : 'text-rose-400');
+
+  $('calcCost').textContent = fmt0(cost);
+  $('calcValue').textContent = fmt0(value);
+  $('calcGram').textContent = fmt3(weight * CFG.GRAM_PER_BAHT);
+
+  /* คำแนะนำสั้น ๆ อิงสัญญาณปัจจุบัน */
+  const a = state.analysis;
+  const hint = $('calcHint');
+  const breakEven = sellPrice;
+  let msg;
+  if (a && a.signal.tone === 'rose' && win) {
+    msg = 'ราคาปัจจุบันสูงกว่าทุน ' + fmt2(pnlPct) + '% และระบบมองเห็นสัญญาณขาย — เหมาะแก่การทยอยขายทำกำไร';
+  } else if (a && a.signal.tone === 'emerald' && !win) {
+    msg = 'ขาดทุนอยู่ ' + fmt2(Math.abs(pnlPct)) + '% แต่ราคาอยู่โซนแนวรับ/สัญญาณซื้อ — อาจรอราคาฟื้นตัวก่อนตัดสินใจขาย';
+  } else if (win) {
+    msg = 'คุณกำลังมีกำไร ' + fmt0(pnl) + ' บาท คิดเป็น ' + fmt2(pnlPct) + '% จากต้นทุน ' + fmt0(cost) + ' บาท';
+  } else {
+    msg = 'ขาดทุน ' + fmt0(Math.abs(pnl)) + ' บาท (' + fmt2(Math.abs(pnlPct)) + '%) ราคาทุนที่ต้องทำให้เสมอทุนคือ ' + fmt0(breakEven) + ' บาท';
+  }
+  if (a) {
+    msg += ' · สัญญาณปัจจุบัน: ' + a.signal.label;
+  }
+  hint.textContent = msg;
+  hint.className = 'mt-3 rounded-lg border px-3 py-2 text-[11px] ' + (win
+    ? 'border-emerald-500/20 bg-emerald-500/5 text-emerald-200/90'
+    : 'border-rose-500/20 bg-rose-500/5 text-rose-200/90');
+}
+
+/* ---------------- Break-even calculator (ค่าบล็อก/ค่ากำเหน็จ) ---------------- */
+
+function beReadForm() {
+  const feeMode = document.querySelector('input[name="beFeeMode"]:checked');
+  const prod = document.querySelector('input[name="beProduct"]:checked');
+  return {
+    buyPrice: toNumber($('beBuyPrice').value),
+    weight: toNumber($('beWeight').value),
+    fee: toNumber($('beFee').value) || 0,
+    feeMode: feeMode ? feeMode.value : 'per',
+    product: prod ? prod.value : 'orn'
+  };
+}
+
+function renderBreakEven() {
+  const f = beReadForm();
+  const d = state.data;
+  const out = $('beResult');
+
+  const feeTotal = f.feeMode === 'per' ? f.fee * (f.weight || 0) : f.fee;
+
+  if (!f.buyPrice || !f.weight || f.weight <= 0) {
+    $('beCost').textContent = '—';
+    $('beBreakEven').textContent = '—';
+    $('beBid').textContent = '—';
+    $('beGap').textContent = '—';
+    $('beGap').className = 'num mt-0.5 font-display text-xl font-semibold text-slate-400';
+    $('beNeed').textContent = 'กรอกราคาที่ซื้อและน้ำหนักเพื่อคำนวณ';
+    $('beFeeShare').textContent = '—';
+    out.className = 'mt-3 rounded-xl border border-white/5 bg-white/5 px-3.5 py-3 text-[11px] text-slate-400';
+    out.textContent = 'ใส่ ราคาที่ซื้อมา + น้ำหนัก + ค่าบล็อก/ค่ากำหนด แล้วระบบจะหาราคาขายต่ำสุดที่ไม่ขาดทุนให้ทันที';
+    return;
+  }
+
+  const cost = f.buyPrice * f.weight + feeTotal;
+  const breakEvenPerBaht = cost / f.weight;
+  const isBar = f.product === 'bar';
+  const bidPrice = d ? (isBar ? d.barBuy : d.ornBuy) : null;
+  const goldOnlyCost = f.buyPrice * f.weight;
+
+  $('beCost').textContent = fmt0(cost);
+  $('beBreakEven').textContent = fmt0(breakEvenPerBaht);
+  $('beBid').textContent = bidPrice != null ? fmt0(bidPrice) : '—';
+  $('beFeeShare').textContent = feeTotal > 0
+    ? fmt0(feeTotal) + ' บาท (' + fmt2((feeTotal / goldOnlyCost) * 100) + '% ของค่าทอง)'
+    : 'ไม่ได้ระบุค่าบล็อก/ค่ากำหนด';
+
+  if (bidPrice == null) {
+    $('beGap').textContent = '—';
+    $('beGap').className = 'num mt-0.5 font-display text-xl font-semibold text-slate-400';
+    $('beNeed').textContent = 'รอข้อมูลราคารับซื้อปัจจุบัน…';
+    out.className = 'mt-3 rounded-xl border border-white/5 bg-white/5 px-3.5 py-3 text-[11px] text-slate-400';
+    out.textContent = 'ราคาเสมอทุนของคุณคือ ' + fmt0(breakEvenPerBaht) + ' บาท ต่อ 1 บาททองคำ';
+    return;
+  }
+
+  const gapPerBaht = bidPrice - breakEvenPerBaht;
+  const pnl = gapPerBaht * f.weight;
+  const needPct = ((breakEvenPerBaht - bidPrice) / bidPrice) * 100;
+  const profitable = gapPerBaht >= 0;
+
+  $('beGap').textContent = (profitable ? '+' : '−') + fmt0(Math.abs(gapPerBaht));
+  $('beGap').className = 'num mt-0.5 font-display text-xl font-semibold ' + (profitable ? 'text-emerald-400' : 'text-rose-400');
+  $('beNeed').textContent = profitable
+    ? 'ขายคืนตอนนี้ได้กำไรแล้ว ' + fmt0(pnl) + ' บาท (ราคารับซื้อสูงกว่าจุดเสมอทุน ' + fmt0(Math.abs(gapPerBaht)) + ' บาท/บาททอง)'
+    : 'ต้องรอราคารับซื้อขึ้นอีก ' + fmt0(Math.abs(gapPerBaht)) + ' บาท/บาททอง หรือ +' + fmt2(needPct) + '% จึงจะเสมอทุน';
+
+  out.className = 'mt-3 rounded-xl border px-3.5 py-3 text-[11px] ' +
+    (profitable ? 'border-emerald-500/25 bg-emerald-500/5 text-emerald-200/90' : 'border-rose-500/25 bg-rose-500/5 text-rose-200/90');
+  out.innerHTML =
+    'ต้นทุนรวม ' + fmt0(cost) + ' บาท (ค่าทอง ' + fmt0(goldOnlyCost) + ' + ค่าบล็อก ' + fmt0(feeTotal) + ')' +
+    '<br>ต้องขายคืนที่ <b>' + fmt0(breakEvenPerBaht) + ' บาท/บาททอง</b> จึงจะไม่ขาดทุน' +
+    '<br>ราคารับซื้อ' + (isBar ? 'ทองแท่ง' : 'ทองรูปพรรณ') + 'วันนี้ ' + fmt0(bidPrice) + ' บาท → ' +
+    (profitable ? 'กำไร' : 'ขาดทุน') + ' ' + fmt0(Math.abs(pnl)) + ' บาท' +
+    (feeTotal > 0 ? '<br><span class="opacity-75">ค่าบล็อกคือเหตุผลที่ต้องขายแพงกว่าราคาที่ซื้อมา — ยิ่งค่าบล็อกสูง จุดเสมอทุนยิ่งสูงตาม</span>' : '');
+}
+
+function copyFromProfitCalculator() {
+  const t = document.querySelector('input[name="calcType"]:checked');
+  $('beBuyPrice').value = $('calcBuyPrice').value || '';
+  $('beWeight').value = $('calcWeight').value || '';
+  const target = t && t.value === 'bar' ? 'bar' : 'orn';
+  document.querySelectorAll('input[name="beProduct"]').forEach(r => { r.checked = r.value === target; });
+  syncRadioGroupUI('beProduct');
+  renderBreakEven();
+}
+
+/* ---------------- Trade journal (บันทึกการซื้อขาย) ---------------- */
+
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+function loadTrades() {
+  try {
+    const raw = localStorage.getItem(CFG.TRADES_KEY);
+    const arr = raw ? JSON.parse(raw) : [];
+    state.trades = Array.isArray(arr)
+      ? arr.filter(t => t && t.id && Number.isFinite(t.weight) && Number.isFinite(t.price))
+      : [];
+  } catch (e) { state.trades = []; }
+}
+
+function saveTrades() {
+  try {
+    localStorage.setItem(CFG.TRADES_KEY, JSON.stringify(state.trades));
+  } catch (e) { /* ข้ามได้ */ }
+}
+
+/** เรียงตามวันและเวลาที่บันทึก เพื่อคำนวณต้นทุนถัวเฉลี่ยได้ถูกต้อง */
+function sortedTrades() {
+  return state.trades.slice().sort((a, b) => {
+    if (a.date !== b.date) return a.date < b.date ? -1 : 1;
+    return (a.createdAt || 0) - (b.createdAt || 0);
+  });
+}
+
+/** คำนวณพอร์ตด้วยวิธีต้นทุนถัวเฉลี่ย แยกตามประเภททอง */
+function computePortfolio() {
+  const pos = { bar: { w: 0, cost: 0 }, orn: { w: 0, cost: 0 } };
+  let realized = 0, invested = 0, proceeds = 0, fees = 0, oversold = false;
+
+  sortedTrades().forEach(t => {
+    const p = pos[t.product] || pos.bar;
+    const fee = Number.isFinite(t.fee) ? t.fee : 0;
+    fees += fee;
+
+    if (t.side === 'buy') {
+      const total = t.price * t.weight + fee;
+      p.w += t.weight;
+      p.cost += total;
+      invested += total;
+    } else {
+      const net = t.price * t.weight - fee;
+      proceeds += net;
+
+      const avg = p.w > 1e-9 ? p.cost / p.w : null;
+      const reduceW = avg != null ? Math.min(t.weight, p.w) : 0;
+
+      /* คิดกำไรเฉพาะส่วนที่หักจากต้นทุนที่มีบันทึกไว้จริง */
+      if (reduceW > 0) {
+        realized += (t.price - avg) * reduceW - fee * (reduceW / t.weight);
+        p.cost -= avg * reduceW;
+      }
+      if (avg == null || t.weight > p.w + 1e-9) oversold = true;
+
+      p.w -= t.weight;
+      if (p.w < 1e-9) { p.w = 0; p.cost = 0; }
+      if (p.cost < 1e-9) p.cost = 0;
+    }
+  });
+
+  const d = state.data;
+  let value = 0, costLeft = 0;
+  ['bar', 'orn'].forEach(k => {
+    costLeft += pos[k].cost;
+    if (d) value += pos[k].w * (k === 'bar' ? d.barSell : d.ornSell);
+  });
+
+  const unrealized = d ? value - costLeft : null;
+  const unrealizedPct = (d && costLeft > 1e-9) ? (unrealized / costLeft) * 100 : null;
+  const holdW = pos.bar.w + pos.orn.w;
+
+  return { pos, realized, invested, proceeds, fees, oversold, value, costLeft, unrealized, unrealizedPct, holdW };
+}
+
+function addTradeFromForm() {
+  const side = $('jSide').value;
+  const product = $('jProduct').value;
+  const weight = toNumber($('jWeight').value);
+  const price = toNumber($('jPrice').value);
+  const fee = toNumber($('jFee').value) || 0;
+  const note = $('jNote').value.trim().slice(0, 120);
+  const date = $('jDate').value || ymd(new Date());
+
+  if (!weight || weight <= 0) {
+    pushToast({ title: 'กรุณากรอกน้ำหนัก', body: 'ระบุจำนวนทองเป็น "บาททองคำ" เช่น 1, 2 หรือ 0.5', tone: 'info' });
+    return;
+  }
+  if (!price || price <= 0) {
+    pushToast({ title: 'กรุณากรอกราคาต่อบาททอง', body: 'ใส่ราคาที่ซื้อหรือขายจริงต่อ 1 บาททองคำ', tone: 'info' });
+    return;
+  }
+
+  state.trades.push({
+    id: 't' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    date, side, product, weight, price, fee, note,
+    createdAt: Date.now()
+  });
+  saveTrades();
+
+  $('jWeight').value = '';
+  $('jPrice').value = '';
+  $('jFee').value = '';
+  $('jNote').value = '';
+
+  renderJournal();
+  pushToast({
+    title: (side === 'buy' ? 'บันทึกการซื้อแล้ว' : 'บันทึกการขายแล้ว'),
+    body: (product === 'bar' ? 'ทองแท่ง' : 'ทองรูปพรรณ') + ' ' + fmt3(weight) + ' บาททองคำ' +
+      ' @ ' + fmt0(price) + ' บาท' + (fee ? ' (ค่าบล็อก ' + fmt0(fee) + ')' : ''),
+    tone: side === 'buy' ? 'buy' : 'sell'
+  });
+}
+
+function deleteTrade(id) {
+  state.trades = state.trades.filter(t => t.id !== id);
+  saveTrades();
+  renderJournal();
+}
+
+function exportTrades() {
+  if (!state.trades.length) {
+    pushToast({ title: 'ยังไม่มีข้อมูลให้ส่งออก', body: 'บันทึกรายการซื้อขายก่อนแล้วลองใหม่', tone: 'info' });
+    return;
+  }
+  try {
+    const blob = new Blob([JSON.stringify({ app: 'GoldSignal TH', exportedAt: new Date().toISOString(), trades: state.trades }, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'goldsignal-trades-' + ymd(new Date()) + '.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  } catch (e) {
+    console.warn('[GoldSignal] export failed', e);
+  }
+}
+
+function renderJournal() {
+  const p = computePortfolio();
+  const d = state.data;
+  const list = $('tradeList');
+
+  $('pfHold').textContent = fmt3(p.holdW);
+  $('pfHoldGram').textContent = p.holdW > 0 ? fmt3(p.holdW * CFG.GRAM_PER_BAHT) + ' กรัม' : 'ยังไม่ถือทอง';
+
+  const avgCost = p.holdW > 1e-9 ? p.costLeft / p.holdW : null;
+  $('pfAvg').textContent = avgCost != null ? fmt0(avgCost) : '—';
+  $('pfAvgNote').textContent = avgCost != null ? 'ต้นทุนถัวเฉลี่ยต่อ 1 บาททองคำ' : '—';
+
+  $('pfValue').textContent = d && p.holdW > 0 ? fmt0(p.value) : '—';
+  $('pfValueNote').textContent = d && p.holdW > 0 ? 'คิดตามราคาขายออกวันนี้' : '—';
+
+  const un = p.unrealized;
+  $('pfUnrealized').textContent = un == null || p.holdW <= 0 ? '—' : (un >= 0 ? '+' : '−') + fmt0(Math.abs(un));
+  $('pfUnrealized').className = 'num mt-0.5 font-display text-xl font-semibold ' +
+    (un == null || p.holdW <= 0 ? 'text-slate-400' : un >= 0 ? 'text-emerald-400' : 'text-rose-400');
+  $('pfUnrealizedNote').textContent = (un == null || p.holdW <= 0 || p.unrealizedPct == null)
+    ? 'ยังไม่มีการถือครอง'
+    : signed(p.unrealizedPct, 2) + '% จากต้นทุน ' + fmt0(p.costLeft) + ' บาท';
+
+  const total = p.realized + (p.holdW > 0 && un != null ? un : 0);
+  $('pfRealized').textContent = (p.realized >= 0 ? '+' : '−') + fmt0(Math.abs(p.realized));
+  $('pfRealized').className = 'num mt-0.5 font-display text-xl font-semibold ' + (p.realized >= 0 ? 'text-emerald-400' : 'text-rose-400');
+
+  $('pfTotal').textContent = (total >= 0 ? '+' : '−') + fmt0(Math.abs(total));
+  $('pfTotal').className = 'mt-0.5 font-display text-xl font-semibold ' + (total >= 0 ? 'text-gold' : 'text-rose-400');
+
+  $('pfCount').textContent = state.trades.length + ' รายการ';
+  $('pfInvested').textContent = fmt0(p.invested);
+  $('pfFees').textContent = fmt0(p.fees);
+
+  const warn = $('pfWarning');
+  if (p.oversold) {
+    warn.classList.remove('hidden');
+    warn.textContent = 'มีรายการขายที่มากกว่าหรือไม่มีต้นทุนที่บันทึกไว้ — ระบบคิดกำไรเฉพาะส่วนที่มีต้นทุนจริง จึงอาจไม่ครบถ้วน ควรบันทึกรายการซื้อให้ครบก่อน';
+  } else {
+    warn.classList.add('hidden');
+  }
+
+  const rows = sortedTrades().reverse();
+  if (!rows.length) {
+    list.innerHTML = '<tr><td colspan="8" class="px-3 py-6 text-center text-[11px] text-slate-600">ยังไม่มีรายการ — บันทึกการซื้อครั้งแรกเพื่อเริ่มติดตามพอร์ต</td></tr>';
+    return;
+  }
+
+  list.innerHTML = rows.map(t => {
+    const isBuy = t.side === 'buy';
+    const gross = t.price * t.weight;
+    const fee = t.fee || 0;
+    const net = isBuy ? gross + fee : gross - fee;
+    return '<tr>' +
+      '<td class="px-3 py-2 text-[11px] text-slate-400 num">' + formatTradeDate(t.date) + '</td>' +
+      '<td class="px-3 py-2"><span class="rounded-md px-2 py-0.5 text-[10px] font-semibold ' +
+        (isBuy ? 'bg-emerald-500/15 text-emerald-300' : 'bg-rose-500/15 text-rose-300') + '">' +
+        (isBuy ? 'ซื้อ' : 'ขาย') + '</span></td>' +
+      '<td class="px-3 py-2 text-[11px] text-slate-300">' + (t.product === 'bar' ? 'ทองแท่ง' : 'รูปพรรณ') + '</td>' +
+      '<td class="num px-3 py-2 text-right text-[11px] text-slate-200">' + fmt3(t.weight) + '</td>' +
+      '<td class="num px-3 py-2 text-right text-[11px] text-slate-200">' + fmt0(t.price) + '</td>' +
+      '<td class="num px-3 py-2 text-right text-[11px] ' + (fee ? 'text-amber-300' : 'text-slate-500') + '">' + (fee ? fmt0(fee) : '—') + '</td>' +
+      '<td class="num px-3 py-2 text-right text-[11px] font-medium ' + (isBuy ? 'text-slate-300' : 'text-emerald-300') + '">' + fmt0(net) + '</td>' +
+      '<td class="px-3 py-2 text-right"><button data-trade="' + t.id + '" class="rounded-md border border-white/10 px-2 py-0.5 text-[10px] text-slate-400 transition hover:border-rose-500/40 hover:text-rose-300">ลบ</button></td>' +
+      '</tr>' +
+      (t.note ? '<tr><td colspan="8" class="px-3 pb-2 text-[10px] text-slate-500">📝 ' + escapeHtml(t.note) + '</td></tr>' : '');
+  }).join('');
+}
+
+function formatTradeDate(dateStr) {
+  try {
+    return dateLabels(new Date(dateStr + 'T00:00:00')).full;
+  } catch (e) {
+    return dateStr;
+  }
+}
+
+/** อัปเดตปุ่มเลือกแบบกลุ่ม (radio ที่ซ่อน input ไว้) */
+function syncRadioGroupUI(groupName) {
+  document.querySelectorAll('input[name="' + groupName + '"]').forEach(r => {
+    const label = r.closest('label');
+    if (!label) return;
+    const base = label.dataset.base || 'flex-1 cursor-pointer rounded-xl border px-3 py-2 text-center text-xs font-medium transition';
+    label.className = base + (r.checked
+      ? ' border-gold/50 bg-gold/10 text-gold'
+      : ' border-white/10 text-slate-400 hover:border-gold/40');
+  });
+}
+
+/* ---------------- Global market: Gold Spot + USD/THB ---------------- */
+
+let macroChart = null;
+
+function ymd(date) {
+  const d = date || new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+async function fetchGoldSpot() {
+  const j = await fetchWithTimeout(CFG.XAU_API, 9000);
+  const price = toNumber(j && (j.price ?? j.rate));
+  if (!price) throw new Error('รูปแบบข้อมูลทองโลกไม่ถูกต้อง');
+  return { price, updated: j.updatedAt || null };
+}
+
+async function fetchUsdThbOn(dateStr) {
+  const j = await fetchWithTimeout(CFG.FX_CDN + dateStr + '/v1/currencies/usd.json', 9000);
+  const v = j && j.usd && j.usd.thb;
+  return Number.isFinite(v) ? v : null;
+}
+
+/** อัตราแลกเปลี่ยนล่าสุด — เดินถอยหลังวันละครั้งจนกว่าจะเจอข้อมูลที่ประกาศแล้ว */
+async function fetchUsdThbLatest() {
+  for (let i = 0; i < 5; i++) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    try {
+      const v = await fetchUsdThbOn(ymd(d));
+      if (v != null) return { rate: v, date: ymd(d) };
+    } catch (e) { /* วันนั้นยังไม่ประกาศ — ลองวันก่อนหน้า */ }
+  }
+  /* แหล่งสำรอง: ไม่มีข้อมูลย้อนหลัง แต่ใช้ยืนยันราคาปัจจุบันได้ */
+  const j = await fetchWithTimeout(CFG.FX_API, 9000);
+  const v = j && j.rates && j.rates.THB;
+  if (Number.isFinite(v)) return { rate: v, date: ymd(new Date()) };
+  throw new Error('ไม่สามารถดึงอัตราแลกเปลี่ยนได้');
+}
+
+/** ชุดข้อมูล USD/THB ย้อนหลัง 30 วัน (สุ่มเก็บจุดเพื่อลดจำนวนคำขอ) */
+async function fetchUsdThbSeries() {
+  const offsets = [30, 26, 22, 18, 14, 11, 8, 5, 3, 1];
+  const results = await Promise.all(offsets.map(async off => {
+    for (let k = 0; k < 3; k++) {
+      const d = new Date();
+      d.setDate(d.getDate() - (off + k));
+      try {
+        const v = await fetchUsdThbOn(ymd(d));
+        if (v != null) return { t: d.getTime(), rate: v };
+      } catch (e) { /* ข้ามไปลองวันถัดไป */ }
+    }
+    return null;
+  }));
+  return results.filter(Boolean).sort((a, b) => a.t - b.t);
+}
+
+/** มูลค่าที่ควรเป็นของทองคำแท่งไทย 1 บาททอง จากราคาโลก × ค่าเงิน */
+function fairThaiPrice(xau, usdthb) {
+  if (!xau || !usdthb) return null;
+  return xau * usdthb * (CFG.GRAM_PER_BAHT / CFG.TROY_OZ_GRAMS) * CFG.PURITY_965;
+}
+
+function valueAtDaysAgo(series, days) {
+  if (!series.length) return null;
+  const target = Date.now() - days * 86400000;
+  let best = null;
+  series.forEach(p => {
+    const diff = Math.abs(p.t - target);
+    if (!best || diff < best.diff) best = { diff, rate: p.rate, t: p.t };
+  });
+  /* ยอมรับได้เฉพาะจุดที่ห่างไม่เกิน 3 วัน */
+  if (!best || best.diff > 3.2 * 86400000) return null;
+  return best.rate;
+}
+
+function loadMacroSnaps() {
+  try {
+    const raw = localStorage.getItem(CFG.MACRO_KEY);
+    const arr = raw ? JSON.parse(raw) : [];
+    if (Array.isArray(arr)) state.macroSnaps = arr.filter(x => x && Number.isFinite(x.xau)).slice(-500);
+  } catch (e) { state.macroSnaps = []; }
+}
+
+function saveMacroSnaps() {
+  try {
+    localStorage.setItem(CFG.MACRO_KEY, JSON.stringify(state.macroSnaps.slice(-500)));
+  } catch (e) { /* ข้ามได้ */ }
+}
+
+function pushMacroSnapshot(xau, usdthb) {
+  if (!Number.isFinite(xau)) return;
+  const last = state.macroSnaps[state.macroSnaps.length - 1];
+  if (last && Date.now() - last.t < CFG.MACRO_SNAP_MIN) {
+    last.xau = xau;                    /* อัปเดตค่าล่าสุดโดยไม่เพิ่มจุดใหม่ */
+    if (Number.isFinite(usdthb)) last.usdthb = usdthb;
+  } else {
+    state.macroSnaps.push({ t: Date.now(), xau, usdthb: Number.isFinite(usdthb) ? usdthb : null });
+  }
+  if (state.macroSnaps.length > 500) state.macroSnaps = state.macroSnaps.slice(-500);
+  saveMacroSnaps();
+}
+
+/** เปรียบเทียบราคาทองโลกกับเมื่อ ~24 ชั่วโมงก่อน */
+function xauChange24h() {
+  const now = Date.now();
+  let best = null;
+  state.macroSnaps.forEach(s => {
+    const diff = Math.abs(now - 86400000 - s.t);
+    if ((!best || diff < best.diff) && diff < 20 * 3600000) best = { diff, xau: s.xau };
+  });
+  if (!best || !best.xau) return null;
+  return ((state.macro.xau - best.xau) / best.xau) * 100;
+}
+
+function renderAttribution() {
+  const m = state.macro;
+  const target = Date.now() - 86400000;
+  const baseline = state.macroSnaps
+    .filter(s => Number.isFinite(s.xau) && Number.isFinite(s.usdthb))
+    .reduce((best, s) => Math.abs(s.t - target) < (best ? best.diff : Infinity)
+      ? { snap: s, diff: Math.abs(s.t - target) } : best, null);
+
+  if (m.xau != null && m.usdthb != null && baseline && baseline.diff <= 4 * 3600000) {
+    const old = baseline.snap;
+    const k = CFG.GRAM_PER_BAHT / CFG.TROY_OZ_GRAMS * CFG.PURITY_965;
+    const spotImpact = k * (m.xau - old.xau) * (m.usdthb + old.usdthb) / 2;
+    const fxImpact = k * (m.usdthb - old.usdthb) * (m.xau + old.xau) / 2;
+    const oldFair = fairThaiPrice(old.xau, old.usdthb);
+    const total = spotImpact + fxImpact;
+    $('attributionSpot').textContent = signed(spotImpact, 0) + ' บาท';
+    $('attributionSpotPct').textContent = signed((spotImpact / oldFair) * 100, 2) + '% ของ Fair Price';
+    $('attributionFx').textContent = signed(fxImpact, 0) + ' บาท';
+    $('attributionFxPct').textContent = signed((fxImpact / oldFair) * 100, 2) + '% ของ Fair Price';
+    $('attributionTotal').textContent = 'รวม Fair Price เปลี่ยนประมาณ ' + signed(total, 0) + ' บาทใน ' + fmt2(baseline.diff / 3600000) + ' ชม. · เป็นการแยกผลจาก Spot/FX ไม่รวมการเปลี่ยนพรีเมียมและรอบประกาศราคาสมาคมฯ';
+  } else {
+    $('attributionSpot').textContent = '—';
+    $('attributionFx').textContent = '—';
+    $('attributionSpotPct').textContent = 'ยังไม่มีข้อมูลครบ 24 ชม.';
+    $('attributionFxPct').textContent = 'ยังไม่มีข้อมูลครบ 24 ชม.';
+    $('attributionTotal').textContent = 'การแยกผลจะแสดงเมื่อมี snapshot Gold Spot และ USD/THB ใกล้เคียง 24 ชั่วโมง (ระบบเก็บทุก 30 นาที)';
+  }
+
+  const fxMove = m.chg1 != null ? m.chg1 : m.chg7;
+  let warning = 'ความเสี่ยงค่าเงิน: ยังไม่มีข้อมูลย้อนหลังพอสำหรับประเมิน';
+  if (fxMove != null && Math.abs(fxMove) >= 0.5) {
+    warning = 'ความเสี่ยงค่าเงินสูง: USD/THB เปลี่ยน ' + signed(fxMove, 2) + '% — ' +
+      (fxMove > 0 ? 'เงินบาทอ่อนกดดันให้ต้นทุนทองไทยสูงขึ้น แม้ Spot ไม่เปลี่ยน' : 'เงินบาทแข็งอาจกดราคาไทย แม้ Spot ไม่เปลี่ยน');
+  } else if (fxMove != null && Math.abs(fxMove) >= 0.2) {
+    warning = 'เฝ้าระวังเงินบาท: USD/THB เปลี่ยน ' + signed(fxMove, 2) + '%; ผลค่าเงินอาจกลบหรือเสริมทิศทาง Gold Spot';
+  } else if (fxMove != null) {
+    warning = 'ความเสี่ยงค่าเงินปัจจุบันค่อนข้างต่ำ: USD/THB เปลี่ยน ' + signed(fxMove, 2) + '% ตามข้อมูลย้อนหลังที่มี';
+  }
+  $('fxRiskWarning').textContent = warning;
+}
+
+async function refreshMacro() {
+  const m = state.macro;
+  if (m.loading) return;
+  m.loading = true;
+  try {
+    const officialSpot = state.data ? toNumber(state.data.goldSpot) : null;
+    const officialFx = state.data ? toNumber(state.data.usdthb) : null;
+    const [spot, fx] = await Promise.allSettled([
+      officialSpot == null ? fetchGoldSpot() : Promise.resolve(null),
+      officialFx == null ? fetchUsdThbLatest() : Promise.resolve(null)
+    ]);
+
+    m.error = null;
+    m.xau = officialSpot ?? (spot.status === 'fulfilled' && spot.value ? spot.value.price : null);
+    m.xauUpdated = officialSpot != null && state.data.announcementTime
+      ? state.data.announcementTime
+      : spot.status === 'fulfilled' && spot.value ? spot.value.updated : null;
+    m.usdthb = officialFx ?? (fx.status === 'fulfilled' && fx.value ? fx.value.rate : null);
+    m.fxDate = officialFx != null
+      ? ymd(new Date())
+      : fx.status === 'fulfilled' && fx.value ? fx.value.date : null;
+
+    if (m.xau == null && m.usdthb == null) {
+      m.error = 'ไม่สามารถดึงข้อมูลตลาดโลกได้ (เครือข่ายหรือ CORS)';
+      renderMacro();
+      return;
+    }
+
+    /* ชุดข้อมูลค่าเงินย้อนหลัง — ดึงครั้งเดียวต่อการเปิดหน้า */
+    if (!m.seriesLoaded) {
+      try {
+        m.fxSeries = await fetchUsdThbSeries();
+        m.seriesLoaded = m.fxSeries.length > 2;
+      } catch (e) { /* ใช้ข้อมูลเท่าที่มี */ }
+    }
+    if (m.fxSeries.length && m.usdthb != null) {
+      const last = m.fxSeries[m.fxSeries.length - 1];
+      if (last.rate !== m.usdthb) m.fxSeries.push({ t: Date.now(), rate: m.usdthb });
+    }
+
+    const ref1 = valueAtDaysAgo(m.fxSeries, 1);
+    const ref7 = valueAtDaysAgo(m.fxSeries, 7);
+    const ref30 = valueAtDaysAgo(m.fxSeries, 30);
+    m.chg1 = ref1 ? ((m.usdthb - ref1) / ref1) * 100 : null;
+    m.chg7 = ref7 ? ((m.usdthb - ref7) / ref7) * 100 : null;
+    m.chg30 = ref30 ? ((m.usdthb - ref30) / ref30) * 100 : null;
+
+    pushMacroSnapshot(m.xau, m.usdthb);
+    m.xauChg = m.xau != null ? xauChange24h() : null;
+
+    m.fair = fairThaiPrice(m.xau, m.usdthb);
+    const actual = state.data ? state.data.barSell : null;
+    if (m.fair && actual) {
+      m.premiumBaht = actual - m.fair;
+      m.premiumPct = (m.premiumBaht / m.fair) * 100;
+    }
+
+    renderMacro();
+  } catch (err) {
+    console.warn('[GoldSignal] macro refresh failed', err);
+    state.macro.error = 'ดึงข้อมูลตลาดโลกไม่สำเร็จ: ' + (err && err.message ? err.message : 'ไม่ทราบสาเหตุ');
+    renderMacro();
+  } finally {
+    state.macro.loading = false;
+  }
+}
+
+/** ระดับความอ่อน/แข็งของเงินบาท และทิศทางที่ส่งผลต่อราคาทองไทย */
+function fxVerdict(chg) {
+  if (chg == null) return { key: 'unknown', tone: 'slate', title: 'ยังไม่มีข้อมูลเปรียบเทียบ', sign: 0 };
+  if (chg >= 0.3) return { key: 'weak-strong', tone: 'emerald', title: 'เงินบาทอ่อนค่าชัดเจน', sign: 1 };
+  if (chg >= 0.1) return { key: 'weak-mild', tone: 'emerald', title: 'เงินบาทอ่อนค่าเล็กน้อย', sign: 1 };
+  if (chg <= -0.3) return { key: 'strong-strong', tone: 'rose', title: 'เงินบาทแข็งค่าชัดเจน', sign: -1 };
+  if (chg <= -0.1) return { key: 'strong-mild', tone: 'rose', title: 'เงินบาทแข็งค่าเล็กน้อย', sign: -1 };
+  return { key: 'flat', tone: 'slate', title: 'เงินบาททรงตัว', sign: 0 };
+}
+
+function initMacroChart() {
+  const canvas = $('macroChart');
+  if (!canvas || typeof Chart === 'undefined') return;
+  const ctx = canvas.getContext('2d');
+  const grad = ctx.createLinearGradient(0, 0, 0, 200);
+  grad.addColorStop(0, 'rgba(56,189,248,.35)');
+  grad.addColorStop(1, 'rgba(56,189,248,0)');
+
+  macroChart = new Chart(ctx, {
+    type: 'line',
+    data: { labels: [], datasets: [{
+      label: 'USD/THB', data: [], borderColor: '#38bdf8', backgroundColor: grad,
+      fill: true, tension: 0.35, borderWidth: 2, pointRadius: 2, pointHoverRadius: 4
+    }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(11,16,23,.95)', borderColor: 'rgba(56,189,248,.35)', borderWidth: 1, padding: 10,
+          callbacks: { label: c => (c.parsed.y == null ? null : '1 USD = ' + c.parsed.y.toFixed(4) + ' บาท') }
+        }
+      },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,.04)' }, ticks: { font: { size: 10 }, maxTicksLimit: 6 }, border: { display: false } },
+        y: { position: 'right', grid: { color: 'rgba(255,255,255,.05)' }, border: { display: false }, ticks: { font: { size: 10 }, callback: v => v.toFixed(2) } }
+      }
+    }
+  });
+}
+
+function updateMacroChart() {
+  if (!macroChart) return;
+  const s = state.macro.fxSeries;
+  macroChart.data.labels = s.map(p => {
+    const d = new Date(p.t);
+    return d.getDate() + '/' + (d.getMonth() + 1);
+  });
+  macroChart.data.datasets[0].data = s.map(p => p.rate);
+  macroChart.update();
+}
+
+function renderMacro() {
+  const m = state.macro;
+  const d = state.data;
+
+  $('macroXau').textContent = m.xau != null ? '$' + nf2.format(m.xau) : '—';
+  $('macroXauChg').textContent = m.xauChg == null
+    ? 'เริ่มเก็บแนวโน้มแล้ว — จะเทียบให้ใน 24 ชม.'
+    : signed(m.xauChg, 2) + '% ใน 24 ชม.';
+  $('macroXauChg').className = 'num mt-0.5 text-[10px] ' + (m.xauChg == null ? 'text-slate-500' : m.xauChg >= 0 ? 'text-emerald-400' : 'text-rose-400');
+
+  $('macroUsdthb').textContent = m.usdthb != null ? nf2.format(m.usdthb) : '—';
+  $('macroUsdthbDate').textContent = m.fxDate ? 'อัตราประจำวันที่ ' + dateLabels(new Date(m.fxDate + 'T00:00:00')).full : '—';
+  const chgParts = [];
+  if (m.chg1 != null) chgParts.push('1 วัน ' + signed(m.chg1, 2) + '%');
+  if (m.chg7 != null) chgParts.push('7 วัน ' + signed(m.chg7, 2) + '%');
+  if (m.chg30 != null) chgParts.push('30 วัน ' + signed(m.chg30, 2) + '%');
+  $('macroUsdthbChg').textContent = chgParts.length ? chgParts.join(' · ') : 'ยังไม่มีข้อมูลย้อนหลัง';
+
+  /* --- ราคาเหมาะสม --- */
+  if (m.fair && d) {
+    $('macroFair').textContent = fmt0(m.fair);
+    $('macroFairFormula').textContent = 'Spot × 0.965 × 15.244 ÷ 31.1035 × USD/THB = ' + fmt0(m.fair) + ' บาท/บาททอง';
+    const diff = m.premiumBaht;
+    $('macroPremium').textContent = diff >= 0
+      ? 'ราคาสมาคมสูงกว่าค่าเหมาะสม ' + fmt0(Math.abs(diff)) + ' บาท (' + signed(m.premiumPct, 2) + '%)'
+      : 'ราคาสมาคมต่ำกว่าค่าเหมาะสม ' + fmt0(Math.abs(diff)) + ' บาท (' + signed(m.premiumPct, 2) + '%)';
+    $('macroPremium').className = 'num mt-0.5 text-[10px] ' + (Math.abs(m.premiumPct) < 1 ? 'text-slate-500' : diff > 0 ? 'text-amber-300' : 'text-emerald-400');
+  } else {
+    $('macroFair').textContent = '—';
+    $('macroPremium').textContent = 'ต้องมีข้อมูลทั้งทองโลกและค่าเงิน';
+    $('macroFairFormula').textContent = 'สูตรตามที่ระบุ: รอข้อมูล Spot และ USD/THB';
+  }
+
+  /* --- ความอ่อนไหวต่อค่าเงิน --- */
+  const thaiNow = d ? d.barSell : null;
+  if (m.usdthb != null && thaiNow) {
+    const perPct = thaiNow * 0.01;
+    $('macroSens').textContent = '+' + fmt0(perPct) + ' บาท';
+    $('macroSensNote').textContent = 'บาทอ่อนลง 1% → ราคาทองไทยขึ้นประมาณ 1% (' + fmt0(perPct) + ' บาท) และกลับกันเมื่อบาทแข็ง';
+  } else {
+    $('macroSens').textContent = '—';
+    $('macroSensNote').textContent = 'ต้องมีข้อมูลราคาและค่าเงิน';
+  }
+
+  /* --- คำวิเคราะห์แนวโน้มค่าเงิน --- */
+  const v = fxVerdict(m.chg7 != null ? m.chg7 : m.chg1);
+  const chg = m.chg7 != null ? m.chg7 : m.chg1;
+  const box = $('macroVerdict');
+  const tone = v.tone;
+  box.className = 'rounded-xl border px-4 py-3.5 ' +
+    (tone === 'emerald' ? 'border-emerald-500/25 bg-emerald-500/5'
+      : tone === 'rose' ? 'border-rose-500/25 bg-rose-500/5'
+        : 'border-white/10 bg-white/5');
+  $('macroVerdictTitle').className = 'font-display text-sm font-semibold ' +
+    (tone === 'emerald' ? 'text-emerald-300' : tone === 'rose' ? 'text-rose-300' : 'text-slate-300');
+  $('macroVerdictTitle').textContent = v.title +
+    (chg != null ? ' (' + signed(chg, 2) + '% ใน 7 วัน)' : '');
+
+  const impact = (chg != null && thaiNow) ? (thaiNow * chg) / 100 : null;
+  let body;
+  if (v.sign > 0) {
+    body = 'เงินบาทอ่อนค่าลงทำให้ทองคำไทย <b class="text-emerald-300">แพงขึ้นโดยอัตโนมัติ</b> แม้ราคาทองโลกจะไม่ขยับ' +
+      (impact != null ? ' — ค่าเงินเพียงอย่างเดียวหนุนราคาขึ้นประมาณ ' + fmt0(Math.abs(impact)) + ' บาท' : '') +
+      ' · ผู้ซื้อได้เปรียบน้อยลง แต่คนที่ถือทองอยู่ได้กำไรจากอัตราแลกเปลี่ยนเพิ่ม';
+  } else if (v.sign < 0) {
+    body = 'เงินบาทแข็งค่าขึ้นทำให้ทองคำไทย <b class="text-rose-300">ถูกลงโดยอัตโนมัติ</b> แม้ราคาทองโลกจะไม่ขยับ' +
+      (impact != null ? ' — ค่าเงินเพียงอย่างเดียวฉุดราคาลงประมาณ ' + fmt0(Math.abs(impact)) + ' บาท' : '') +
+      ' · จังหวะนี้เป็นประโยชน์กับคนที่ต้องการซื้อสะสม';
+  } else {
+    body = 'อัตราแลกเปลี่ยนทรงตัว จึงไม่มีแรงหนุนหรือกดดันจากค่าเงิน — ราคาทองไทยตอนนี้จึงเคลื่อนไหวตามราคาทองโลกเป็นหลัก';
+  }
+
+  if (m.fair && d && m.premiumPct != null) {
+    body += '<br>เทียบราคาเหมาะสมจากทองโลก × ค่าเงิน ราคาสมาคมตอนนี้เทรดที่ ' +
+      (Math.abs(m.premiumPct) < 0.5 ? 'ใกล้เคียงค่าเหมาะสม (' + signed(m.premiumPct, 2) + '%)'
+        : (m.premiumPct > 0 ? 'สูงกว่า ' : 'ต่ำกว่า ') + 'ค่าเหมาะสม ' + Math.abs(m.premiumPct).toFixed(2) + '%');
+  }
+  $('macroVerdictBody').innerHTML = body;
+
+  $('macroStatus').textContent = m.error
+    ? m.error
+    : (m.xauUpdated ? 'อัปเดตราคาโลก ' + dateTimeLabel(new Date(m.xauUpdated).getTime()) : 'ข้อมูลตลาดโลกอัปเดตล่าสุด ' + dateTimeLabel(Date.now()));
+  $('macroStatus').className = 'text-[11px] ' + (m.error ? 'text-rose-400' : 'text-slate-500');
+
+  updateMacroChart();
+  renderAttribution();
+  updateChart();
+}
+
+/* ---------------- Price alerts ---------------- */
+
+/** ราคาอ้างอิงที่ใช้ตรวจเงื่อนไข — ซื้อใช้ราคาขายออก (ที่ต้องจ่ายจริง) ขายใช้ราคารับซื้อ (ที่ได้จริง) */
+function refPriceFor(a) {
+  const d = state.data;
+  if (!d) return null;
+  const buySide = a.side === 'buy';
+  if (a.product === 'orn') return buySide ? d.ornSell : d.ornBuy;
+  return buySide ? d.barSell : d.barBuy;
+}
+
+function refFieldLabel(a) {
+  const buySide = a.side === 'buy';
+  const prod = a.product === 'orn' ? 'ทองรูปพรรณ' : 'ทองแท่ง';
+  return prod + ' · ' + (buySide ? 'ราคาขายออก (ที่ต้องจ่าย)' : 'ราคารับซื้อ (ที่ได้จริง)');
+}
+
+function condMet(a, price) {
+  return a.condition === 'lte' ? price <= a.target : price >= a.target;
+}
+
+function describeAlert(a) {
+  return refFieldLabel(a) + ' ' + (a.condition === 'lte' ? '≤' : '≥') + ' ' + fmt0(a.target) + ' บาท';
+}
+
+function loadAlerts() {
+  try {
+    const raw = localStorage.getItem(CFG.ALERTS_KEY);
+    const obj = raw ? JSON.parse(raw) : null;
+    if (obj && typeof obj === 'object') {
+      state.alerts = Array.isArray(obj.alerts) ? obj.alerts.filter(x => x && x.id && Number.isFinite(x.target)) : [];
+      state.alertLog = Array.isArray(obj.log) ? obj.log : [];
+      state.soundOn = obj.soundOn !== false;
+    }
+  } catch (e) {
+    state.alerts = [];
+    state.alertLog = [];
+  }
+}
+
+function saveAlerts() {
+  try {
+    localStorage.setItem(CFG.ALERTS_KEY, JSON.stringify({
+      alerts: state.alerts.slice(0, CFG.MAX_ALERTS),
+      log: state.alertLog.slice(0, 20),
+      soundOn: state.soundOn
+    }));
+  } catch (e) { /* ข้ามได้ */ }
+}
+
+/* ---------- ช่องทางการแจ้งเตือน ---------- */
+
+function pushToast(opts) {
+  const host = $('toastHost');
+  if (!host) return;
+  /* ไม่ให้การ์ดแจ้งเตือนล้นจอ — เก็บไว้แสดงสูงสุด 3 ใบ */
+  while (host.children.length >= CFG.MAX_TOASTS) host.firstElementChild.remove();
+
+  const tone = opts.tone || 'info';
+  const border = tone === 'buy' ? 'border-emerald-500/50' : tone === 'sell' ? 'border-rose-500/50' : 'border-gold/45';
+  const accent = tone === 'buy' ? 'text-emerald-300' : tone === 'sell' ? 'text-rose-300' : 'text-gold';
+
+  const el = document.createElement('div');
+  el.className = 'fade-in pointer-events-auto rounded-xl border ' + border + ' bg-ink-800/95 p-4 shadow-2xl shadow-black/60 backdrop-blur';
+  el.innerHTML =
+    '<div class="flex items-start gap-3">' +
+      '<span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-white/5 ' + accent + '">🔔</span>' +
+      '<div class="min-w-0 flex-1">' +
+        '<div class="text-sm font-semibold ' + accent + '">' + opts.title + '</div>' +
+        '<div class="mt-0.5 text-[11px] leading-relaxed text-slate-300">' + opts.body + '</div>' +
+      '</div>' +
+      '<button data-close class="shrink-0 rounded-md px-1.5 text-slate-500 transition hover:text-slate-200">✕</button>' +
+    '</div>';
+  host.appendChild(el);
+
+  const dismiss = () => {
+    el.style.transition = 'opacity .25s ease, transform .25s ease';
+    el.style.opacity = '0';
+    el.style.transform = 'translateX(14px)';
+    setTimeout(() => el.remove(), 260);
+  };
+  const timer = setTimeout(dismiss, CFG.TOAST_MS);
+  el.querySelector('[data-close]').addEventListener('click', () => { clearTimeout(timer); dismiss(); });
+}
+
+function sendWebNotification(a, price) {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  try {
+    const action = a.side === 'buy' ? 'ถึงราคาที่ตั้งซื้อ' : 'ถึงราคาที่ตั้งขาย';
+    const n = new Notification('🔔 ' + action + ' — ' + fmt0(price) + ' บาท', {
+      body: describeAlert(a) +
+        '\nเวลาที่ตรวจพบ: ' + dateTimeLabel(Date.now()) +
+        (state.source === 'mock' ? '\n(ข้อมูลจำลอง — API ไม่ตอบสนอง)' : ''),
+      tag: a.id,
+      lang: 'th'
+    });
+    n.onclick = () => { try { window.focus(); n.close(); } catch (e) { /* ข้ามได้ */ } };
+  } catch (e) {
+    console.warn('[GoldSignal] web notification failed', e);
+  }
+}
+
+function playBeep(side) {
+  if (!state.soundOn) return;
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    if (!state.audioCtx) state.audioCtx = new AC();
+    const ctx = state.audioCtx;
+    if (ctx.state === 'suspended') ctx.resume();
+    const now = ctx.currentTime;
+    const freqs = side === 'buy' ? [660, 990] : [990, 660];
+    freqs.forEach((f, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const t0 = now + i * 0.19;
+      osc.type = 'sine';
+      osc.frequency.value = f;
+      gain.gain.setValueAtTime(0.0001, t0);
+      gain.gain.exponentialRampToValueAtTime(0.16, t0 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.17);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(t0);
+      osc.stop(t0 + 0.2);
+    });
+  } catch (e) { /* เบราว์เซอร์บล็อกเสียงอัตโนมัติ — ข้ามได้ */ }
+}
+
+/* ---------- ตรวจเงื่อนไข ---------- */
+
+function checkAlerts() {
+  /* ต้องมีราคาจากการดึงข้อมูลจริงแล้วเท่านั้น */
+  if (!state.data || !state.lastUpdated) return;
+  const now = Date.now();
+  let fired = 0;
+
+  state.alerts.forEach(a => {
+    if (!a.active) return;
+    const price = refPriceFor(a);
+    if (price == null || !condMet(a, price)) return;
+    if (a.repeat) {
+      if (a.triggeredAt && now - a.triggeredAt < CFG.ALERT_REPEAT_COOLDOWN) return;
+    } else if (a.triggeredAt) {
+      return; /* แจ้งครั้งเดียว — ไม่ยิงซ้ำ */
+    }
+    fireAlert(a, price);
+    fired++;
+  });
+
+  if (fired) {
+    saveAlerts();
+    renderAlerts();
+  }
+}
+
+function fireAlert(a, price, isTest) {
+  const ts = Date.now();
+  /* การทดสอบต้องไม่เปลี่ยนสถานะของการแจ้งเตือนจริง */
+  if (!isTest) {
+    a.triggeredAt = ts;
+    a.triggeredPrice = price;
+    if (!a.repeat) a.active = false;
+  }
+
+  const action = a.side === 'buy' ? 'ถึงราคาที่ตั้งซื้อ' : 'ถึงราคาที่ตั้งขาย';
+  const body = 'ราคาล่าสุด ' + fmt0(price) + ' บาท · เงื่อนไข ' + describeAlert(a) +
+    '<br>' + dateTimeLabel(ts) + (isTest ? ' (ทดสอบ)' : '');
+
+  pushToast({ title: action + ' — ' + fmt0(price) + ' บาท', body, tone: a.side === 'buy' ? 'buy' : 'sell' });
+
+  if (!isTest) {
+    sendWebNotification(a, price);
+    playBeep(a.side);
+    state.alertLog.unshift({ t: ts, text: action + ' · ' + describeAlert(a) + ' (ราคา ' + fmt0(price) + ')' });
+    state.alertLog = state.alertLog.slice(0, 20);
+  }
+}
+
+/* ---------- ฟอร์ม + รายการ ---------- */
+
+function applyAlertFormUI() {
+  const f = state.alertForm;
+  document.querySelectorAll('.side-btn').forEach(b => {
+    const on = b.dataset.side === f.side;
+    b.className = 'side-btn flex-1 rounded-xl border px-3 py-2 text-xs font-medium transition ' +
+      (on
+        ? (f.side === 'buy' ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-300' : 'border-rose-500/50 bg-rose-500/10 text-rose-300')
+        : 'border-white/10 text-slate-400 hover:border-white/25');
+  });
+
+  document.querySelectorAll('.prod-btn').forEach(b => {
+    const on = b.dataset.prod === f.product;
+    b.className = 'prod-btn flex-1 rounded-xl border px-3 py-2 text-xs font-medium transition ' +
+      (on ? 'border-gold/50 bg-gold/10 text-gold' : 'border-white/10 text-slate-400 hover:border-gold/40');
+  });
+
+  document.querySelectorAll('.cond-btn').forEach(b => {
+    const on = b.dataset.cond === f.condition;
+    b.className = 'cond-btn rounded-lg border px-3 py-1.5 text-[11px] transition ' +
+      (on ? 'border-sky-500/50 bg-sky-500/10 text-sky-300' : 'border-white/10 text-slate-400 hover:border-white/25');
+  });
+
+  $('alertRefLabel').textContent = 'จะเฝ้าดู: ' + refFieldLabel(f);
+}
+
+function renderAlertHint() {
+  const el = $('alertHint');
+  const target = toNumber($('alertTarget').value);
+  const f = state.alertForm;
+  const price = refPriceFor(f);
+
+  if (!target || target <= 0) {
+    el.className = 'hidden';
+    return;
+  }
+  if (price == null) {
+    el.className = 'mt-2 rounded-lg border border-white/5 bg-white/5 px-3 py-2 text-[11px] text-slate-400';
+    el.textContent = 'กำลังรอข้อมูลราคาเพื่อเปรียบเทียบ…';
+    return;
+  }
+
+  const diffPct = ((target - price) / price) * 100;
+  const met = f.condition === 'lte' ? price <= target : price >= target;
+  el.className = 'mt-2 rounded-lg border px-3 py-2 text-[11px] ' +
+    (met ? 'border-amber-500/25 bg-amber-500/8 text-amber-300' : 'border-white/5 bg-white/5 text-slate-400');
+  const move = Math.abs(diffPct) < 0.005
+    ? 'ถึงเป้าแล้ว'
+    : (diffPct > 0 ? 'ราคาต้องขึ้นอีก ' + fmt2(diffPct) + '%' : 'ราคาต้องลงอีก ' + fmt2(-diffPct) + '%');
+  el.textContent = met
+    ? 'เงื่อนไขนี้เป็นจริงอยู่แล้วที่ราคาปัจจุบัน ' + fmt0(price) + ' บาท — ระบบจะแจ้งเตือนทันทีเมื่อบันทึก'
+    : 'ราคาปัจจุบัน ' + fmt0(price) + ' บาท · ' + move + ' จึงจะถึงเป้า';
+}
+
+function addAlertFromForm() {
+  if (!state.data) return;
+  const target = toNumber($('alertTarget').value);
+  if (!target || target <= 0) {
+    pushToast({ title: 'กรุณากรอกราคาเป้าหมาย', body: 'ใส่ตัวเลขราคาที่ต้องการให้แจ้งเตือนก่อนกดเพิ่ม', tone: 'info' });
+    return;
+  }
+
+  const f = state.alertForm;
+  const a = {
+    id: 'a' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    side: f.side,
+    product: f.product,
+    condition: f.condition,
+    target,
+    repeat: $('alertRepeat').checked,
+    active: true,
+    createdAt: Date.now(),
+    triggeredAt: null,
+    triggeredPrice: null
+  };
+  state.alerts.unshift(a);
+  state.alerts = state.alerts.slice(0, CFG.MAX_ALERTS);
+  saveAlerts();
+
+  $('alertTarget').value = '';
+  renderAlerts();
+  renderAlertHint();
+
+  pushToast({
+    title: 'เพิ่มการแจ้งเตือนแล้ว',
+    body: describeAlert(a) + (a.repeat ? ' · แจ้งซ้ำทุก 10 นาที' : ' · แจ้งครั้งเดียว') + '<br>จะแจ้งเตือนทันทีเมื่อราคาสดตรงเงื่อนไข',
+    tone: 'info'
+  });
+
+  checkAlerts();
+}
+
+function renderAlerts() {
+  /* --- สถานะสิทธิ์การแจ้งเตือน --- */
+  const supported = 'Notification' in window;
+  const perm = supported ? Notification.permission : 'unsupported';
+  const box = $('notifBox');
+  const btn = $('notifBtn');
+
+  if (!supported) {
+    box.className = 'mb-4 flex items-center justify-between gap-3 rounded-xl border border-white/5 bg-ink-900/50 px-3.5 py-2.5';
+    $('notifTitle').textContent = 'เบราว์เซอร์นี้ไม่รองรับ Web Notification';
+    $('notifSub').textContent = 'ระบบยังแจ้งเตือนบนหน้าจอให้ทันทีอยู่แล้ว';
+    btn.classList.add('hidden');
+  } else if (perm === 'granted') {
+    box.className = 'mb-4 flex items-center justify-between gap-3 rounded-xl border border-emerald-500/25 bg-emerald-500/5 px-3.5 py-2.5';
+    $('notifTitle').textContent = 'การแจ้งเตือนของเบราว์เซอร์: เปิดอยู่';
+    $('notifSub').textContent = 'จะแจ้งเตือนแม้สลับไปแท็บอื่น (ต้องเปิดหน้านี้ค้างไว้)';
+    btn.classList.add('hidden');
+  } else if (perm === 'denied') {
+    box.className = 'mb-4 flex items-center justify-between gap-3 rounded-xl border border-rose-500/25 bg-rose-500/5 px-3.5 py-2.5';
+    $('notifTitle').textContent = 'การแจ้งเตือนถูกบล็อก';
+    $('notifSub').textContent = 'โปรดอนุญาต Notification ในการตั้งค่าเว็บไซต์ของเบราว์เซอร์';
+    btn.classList.add('hidden');
+  } else {
+    box.className = 'mb-4 flex items-center justify-between gap-3 rounded-xl border border-white/5 bg-ink-900/50 px-3.5 py-2.5';
+    $('notifTitle').textContent = 'เปิดการแจ้งเตือนของเบราว์เซอร์';
+    $('notifSub').textContent = 'รับการแจ้งเตือนทันทีแม้ไม่ได้เปิดหน้านี้อยู่';
+    btn.classList.remove('hidden');
+  }
+
+  /* --- รายการแจ้งเตือน --- */
+  const list = $('alertList');
+  if (!state.alerts.length) {
+    list.innerHTML = '<div class="rounded-xl border border-dashed border-white/10 px-3 py-6 text-center text-[11px] text-slate-500">ยังไม่มีการแจ้งเตือน — ตั้งราคาเป้าหมายด้านบนเพื่อเริ่มเฝ้าดู</div>';
+  } else {
+    list.innerHTML = state.alerts.map(a => {
+      const live = refPriceFor(a);
+      const met = a.triggeredAt != null;
+      const dot = !a.active ? 'bg-slate-500' : met ? 'bg-emerald-400' : 'bg-amber-400';
+      let status, statusCls;
+      if (!a.active && met) { status = 'แจ้งเตือนแล้ว'; statusCls = 'bg-emerald-500/15 text-emerald-300'; }
+      else if (!a.active) { status = 'ปิดอยู่'; statusCls = 'bg-white/5 text-slate-400'; }
+      else { status = 'รอเงื่อนไข'; statusCls = 'bg-amber-500/15 text-amber-300'; }
+
+      let dist = 'รอข้อมูลราคา';
+      if (live != null) {
+        const d = ((a.target - live) / live) * 100;
+        const move = Math.abs(d) < 0.005
+          ? 'ถึงเป้าแล้ว'
+          : (d > 0 ? 'ราคาต้องขึ้นอีก ' + fmt2(d) + '%' : 'ราคาต้องลงอีก ' + fmt2(-d) + '%');
+        dist = 'ราคาปัจจุบัน ' + fmt0(live) + ' บาท · ' + move;
+      }
+
+      return '<div class="rounded-xl border border-white/5 bg-ink-900/40 px-3.5 py-3">' +
+        '<div class="flex items-start justify-between gap-3">' +
+          '<div class="min-w-0">' +
+            '<div class="flex items-center gap-2">' +
+              '<span class="h-2 w-2 shrink-0 rounded-full ' + dot + '"></span>' +
+              '<span class="truncate text-xs font-medium text-slate-200">' + describeAlert(a) + '</span>' +
+            '</div>' +
+            '<div class="mt-1 text-[10px] text-slate-500">' + dist + '</div>' +
+            (a.triggeredAt ? '<div class="mt-0.5 text-[10px] text-emerald-400/80">แจ้งเมื่อ ' + dateTimeLabel(a.triggeredAt) + ' ที่ราคา ' + fmt0(a.triggeredPrice) + '</div>' : '') +
+          '</div>' +
+          '<span class="shrink-0 rounded-md px-2 py-0.5 text-[10px] font-medium ' + statusCls + '">' + status + '</span>' +
+        '</div>' +
+        '<div class="mt-2 flex gap-1.5">' +
+          '<button data-act="toggle" data-id="' + a.id + '" class="rounded-lg border border-white/10 px-2.5 py-1 text-[10px] text-slate-300 transition hover:border-gold/40 hover:text-gold">' +
+            (a.active ? 'ปิดชั่วคราว' : 'เปิดเฝ้าดูใหม่') + '</button>' +
+          '<button data-act="test" data-id="' + a.id + '" class="rounded-lg border border-white/10 px-2.5 py-1 text-[10px] text-slate-300 transition hover:border-sky-500/40 hover:text-sky-300">ทดสอบแจ้งเตือน</button>' +
+          '<button data-act="delete" data-id="' + a.id + '" class="ml-auto rounded-lg border border-white/10 px-2.5 py-1 text-[10px] text-slate-400 transition hover:border-rose-500/40 hover:text-rose-300">ลบ</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  $('alertCount').textContent = state.alerts.length;
+
+  /* --- ประวัติ --- */
+  const log = $('alertLogList');
+  if (!state.alertLog.length) {
+    log.innerHTML = '<div class="text-[10px] text-slate-600">ยังไม่มีประวัติการแจ้งเตือน</div>';
+  } else {
+    log.innerHTML = state.alertLog.slice(0, 5).map(l =>
+      '<div class="flex items-start gap-2 text-[10px] text-slate-400">' +
+        '<span class="num shrink-0 text-slate-600">' + dateTimeLabel(l.t) + '</span>' +
+        '<span class="min-w-0 flex-1">' + l.text + '</span>' +
+      '</div>').join('');
+  }
+}
+
+function syncAlertFormFromAnalysis(which) {
+  const a = state.analysis;
+  if (!a) {
+    pushToast({ title: 'ยังไม่มีผลวิเคราะห์', body: 'รอระบบประมวลผลราคาสักครู่แล้วลองใหม่', tone: 'info' });
+    return;
+  }
+  if (which === 'support') {
+    state.alertForm.side = 'buy';
+    state.alertForm.condition = 'lte';
+    $('alertTarget').value = Math.round(a.support);
+  } else if (which === 'resistance') {
+    state.alertForm.side = 'sell';
+    state.alertForm.condition = 'gte';
+    $('alertTarget').value = Math.round(a.resistance);
+  } else if (which === 'targetBuy') {
+    state.alertForm.side = 'buy';
+    state.alertForm.condition = 'lte';
+    $('alertTarget').value = Math.round(a.targetBuy);
+  } else if (which === 'targetSell') {
+    state.alertForm.side = 'sell';
+    state.alertForm.condition = 'gte';
+    $('alertTarget').value = Math.round(a.targetSell);
+  }
+  applyAlertFormUI();
+  renderAlertHint();
+}
+
+/* ---------------- Refresh flow ---------------- */
+
+async function refresh(manual) {
+  if (state.loading) return;
+  state.loading = true;
+  refreshOfficialOhlc(Boolean(manual));
+  const btn = $('refreshBtn');
+  btn.disabled = true;
+  $('refreshLabel').textContent = 'กำลังโหลด…';
+  $('refreshIcon').classList.add('animate-spin');
+
+  const prevPrice = state.history.length ? state.history[state.history.length - 1].price : null;
+
+  try {
+    const { data, source } = await fetchLiveData();
+    state.data = data;
+    state.source = source;
+    state.lastUpdated = Date.now();
+    refreshYlgQuote();
+
+    if (!state.history.length) startHistory(data.barSell);
+    else pushHistory(data.barSell);
+
+    saveHistory();
+
+    /* อัปเดตราคาปิดรายวัน + เตรียมชุดข้อมูลให้โมเดลพยากรณ์ */
+    bootstrapDaily(data.barSell);
+    upsertTodayClose(data.barSell);
+
+    state.analysis = analyze(state.history);
+    renderAll();
+    checkAlerts();
+    await refreshMacro();   /* ตลาดโลก — มี try/catch ภายใน ไม่กระทบราคาหลัก */
+
+    if (prevPrice != null && Math.abs(prevPrice - data.barSell) > 0.5) {
+      flashCard($('cardBarSell'), data.barSell > prevPrice);
+    }
+    if (manual) flashStat();
+  } catch (err) {
+    console.error('[GoldSignal] refresh error', err);
+    const banner = $('statusBanner');
+    banner.className = 'mt-4 rounded-xl border border-rose-500/25 bg-rose-500/8 px-4 py-2.5 text-xs text-rose-300';
+    banner.textContent = 'เกิดข้อผิดพลาดในการดึงข้อมูล: ' + (err && err.message ? err.message : 'ไม่ทราบสาเหตุ');
+    banner.classList.remove('hidden');
+  } finally {
+    state.loading = false;
+    btn.disabled = false;
+    $('refreshLabel').textContent = 'รีเฟรช';
+    $('refreshIcon').classList.remove('animate-spin');
+    state.countdown = CFG.REFRESH_SEC;
+  }
+}
+
+function flashStat() {
+  const el = $('lastUpdated');
+  el.classList.remove('text-gold');
+  void el.offsetWidth;
+  el.classList.add('text-gold');
+  setTimeout(() => el.classList.remove('text-gold'), 900);
+}
+
+/* ---------------- Auto refresh timer ---------------- */
+
+setInterval(() => {
+  if (!state.autoRefresh) { $('countdown').textContent = 'ปิด'; return; }
+  state.countdown -= 1;
+  if (state.countdown <= 0) {
+    state.countdown = CFG.REFRESH_SEC;
+    refresh(false);
+  }
+  $('countdown').textContent = state.countdown;
+}, 1000);
+
+/* ---------------- Event wiring ---------------- */
+
+function wireEvents() {
+  $('refreshBtn').addEventListener('click', () => refresh(true));
+
+  $('autoRefreshToggle').addEventListener('change', e => {
+    state.autoRefresh = e.target.checked;
+    state.countdown = CFG.REFRESH_SEC;
+    $('countdown').textContent = state.autoRefresh ? state.countdown : 'ปิด';
+  });
+
+  $('calcBuyPrice').addEventListener('input', renderCalculator);
+  $('calcWeight').addEventListener('input', renderCalculator);
+  $('riskEntry').addEventListener('input', renderRiskMatrix);
+
+  document.querySelectorAll('.w-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      $('calcWeight').value = btn.dataset.w;
+      renderCalculator();
+    });
+  });
+
+  document.querySelectorAll('input[name="calcType"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      document.querySelectorAll('.type-btn').forEach(label => {
+        const active = label.querySelector('input').checked;
+        label.className = 'type-btn flex-1 cursor-pointer rounded-xl border px-3 py-2 text-center text-xs font-medium transition ' +
+          (active ? 'border-gold/50 bg-gold/10 text-gold' : 'border-white/10 text-slate-400 hover:border-gold/40');
+      });
+      renderCalculator();
+    });
+  });
+
+  document.querySelectorAll('.fday-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.forecastDays = parseInt(btn.dataset.fdays, 10);
+      document.querySelectorAll('.fday-btn').forEach(b => {
+        const active = b === btn;
+        b.className = 'fday-btn rounded-md px-3 py-1 transition ' +
+          (active ? 'bg-white/10 text-white' : 'text-slate-300 hover:bg-white/10');
+      });
+      renderForecast();
+    });
+  });
+
+  document.querySelectorAll('.range-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.range = parseInt(btn.dataset.range, 10);
+      document.querySelectorAll('.range-btn').forEach(b => {
+        const active = b === btn;
+        b.className = 'range-btn rounded-md px-2.5 py-1 transition ' +
+          (active ? 'bg-white/10 text-white' : 'text-slate-300 hover:bg-white/10');
+      });
+      updateChart();
+    });
+  });
+
+  /* ---- การแจ้งเตือนราคา ---- */
+  document.querySelectorAll('.side-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.alertForm.side = btn.dataset.side;
+      /* ตั้งเงื่อนไขให้เหมาะกับฝั่งโดยอัตโนมัติ ผู้ใช้ยังเปลี่ยนเองได้ */
+      state.alertForm.condition = btn.dataset.side === 'buy' ? 'lte' : 'gte';
+      applyAlertFormUI();
+      renderAlertHint();
+    });
+  });
+
+  document.querySelectorAll('.prod-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.alertForm.product = btn.dataset.prod;
+      applyAlertFormUI();
+      renderAlertHint();
+    });
+  });
+
+  document.querySelectorAll('.cond-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.alertForm.condition = btn.dataset.cond;
+      applyAlertFormUI();
+      renderAlertHint();
+    });
+  });
+
+  document.querySelectorAll('.preset-btn').forEach(btn => {
+    btn.addEventListener('click', () => syncAlertFormFromAnalysis(btn.dataset.preset));
+  });
+
+  $('alertTarget').addEventListener('input', renderAlertHint);
+  $('addAlertBtn').addEventListener('click', addAlertFromForm);
+  $('alertTarget').addEventListener('keydown', e => { if (e.key === 'Enter') addAlertFromForm(); });
+
+  $('soundToggle').addEventListener('change', e => {
+    state.soundOn = e.target.checked;
+    saveAlerts();
+    if (state.soundOn) playBeep('buy'); /* ปลดล็อก AudioContext ด้วย gesture ของผู้ใช้ + ทดสอบเสียง */
+  });
+
+  $('notifBtn').addEventListener('click', async () => {
+    if (!('Notification' in window)) return;
+    try {
+      const res = await Notification.requestPermission();
+      if (res === 'granted') {
+        pushToast({ title: 'เปิดการแจ้งเตือนแล้ว', body: 'คุณจะได้รับการแจ้งเตือนทันทีเมื่อราคาถึงเป้า แม้สลับไปแท็บอื่น', tone: 'info' });
+        new Notification('🔔 GoldSignal TH พร้อมแจ้งเตือนแล้ว', { body: 'ทดสอบการแจ้งเตือนครั้งแรก — ระบบจะแจ้งเมื่อราคาตรงเงื่อนไขที่ตั้งไว้', lang: 'th' });
+      }
+    } catch (e) {
+      console.warn('[GoldSignal] requestPermission failed', e);
+    }
+    renderAlerts();
+  });
+
+  $('alertList').addEventListener('click', e => {
+    const btn = e.target.closest('[data-act]');
+    if (!btn) return;
+    const a = state.alerts.find(x => x.id === btn.dataset.id);
+    if (!a) return;
+
+    if (btn.dataset.act === 'toggle') {
+      a.active = !a.active;
+      if (a.active) { a.triggeredAt = null; a.triggeredPrice = null; }
+    } else if (btn.dataset.act === 'delete') {
+      state.alerts = state.alerts.filter(x => x.id !== a.id);
+    } else if (btn.dataset.act === 'test') {
+      playBeep(a.side);
+      sendWebNotification(a, refPriceFor(a) != null ? refPriceFor(a) : a.target);
+      fireAlert(a, refPriceFor(a) != null ? refPriceFor(a) : a.target, true);
+      return;
+    }
+    saveAlerts();
+    renderAlerts();
+    renderAlertHint();
+  });
+
+  $('clearAlertsBtn').addEventListener('click', () => {
+    state.alerts = [];
+    state.alertLog = [];
+    saveAlerts();
+    renderAlerts();
+  });
+
+  /* ---- เครื่องคำนวณจุดเสมอทุน ---- */
+  ['beBuyPrice', 'beWeight', 'beFee'].forEach(id => $(id).addEventListener('input', renderBreakEven));
+  document.querySelectorAll('input[name="beFeeMode"], input[name="beProduct"]').forEach(r => {
+    r.addEventListener('change', () => {
+      syncRadioGroupUI('beFeeMode');
+      syncRadioGroupUI('beProduct');
+      renderBreakEven();
+    });
+  });
+  $('beCopyBtn').addEventListener('click', copyFromProfitCalculator);
+
+  /* ---- บันทึกการซื้อขาย ---- */
+  $('addTradeBtn').addEventListener('click', addTradeFromForm);
+  $('useCurrentPriceBtn').addEventListener('click', () => {
+    const d = state.data;
+    if (!d) return;
+    const buySide = $('jSide').value === 'buy';
+    const isBar = $('jProduct').value === 'bar';
+    const price = isBar ? (buySide ? d.barSell : d.barBuy) : (buySide ? d.ornSell : d.ornBuy);
+    $('jPrice').value = Math.round(price);
+  });
+
+  ['jWeight', 'jPrice', 'jNote'].forEach(id => {
+    $(id).addEventListener('keydown', e => { if (e.key === 'Enter') addTradeFromForm(); });
+  });
+
+  $('tradeList').addEventListener('click', e => {
+    const btn = e.target.closest('[data-trade]');
+    if (btn) deleteTrade(btn.dataset.trade);
+  });
+
+  $('exportTradesBtn').addEventListener('click', exportTrades);
+
+  $('clearTradesBtn').addEventListener('click', () => {
+    if (!state.trades.length) return;
+    state.trades = [];
+    saveTrades();
+    renderJournal();
+    pushToast({ title: 'ล้างประวัติการซื้อขายแล้ว', body: 'รายการทั้งหมดถูกลบออกจากเบราว์เซอร์นี้', tone: 'info' });
+  });
+
+  $('clearHistoryBtn').addEventListener('click', () => {
+    state.history = [];
+    if (state.data) startHistory(state.data.barSell);
+    saveHistory();
+    state.ylgHistory = [];
+    if (state.ylgQuote) pushYlgHistory(state.ylgQuote.sell);
+    else saveYlgHistory();
+    state.analysis = analyze(state.history);
+    renderAll();
+  });
+
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && state.lastUpdated && Date.now() - state.lastUpdated > CFG.REFRESH_SEC * 1000) {
+      refresh(false);
+    }
+  });
+}
+
+/* ---------------- Boot ---------------- */
+
+function boot() {
+  loadHistory();
+  loadOfficialOhlc();
+  loadYlgHistory();
+  loadDaily();
+  loadAlerts();
+  loadMacroSnaps();
+  loadTrades();
+  initChart();
+  initMacroChart();
+  initForecastChart();
+  wireEvents();
+  applyAlertFormUI();
+  $('soundToggle').checked = state.soundOn;
+  $('jDate').value = ymd(new Date());
+  syncRadioGroupUI('beFeeMode');
+  syncRadioGroupUI('beProduct');
+  renderAlerts();
+  renderBreakEven();
+  renderJournal();
+
+  /* แสดงข้อมูลเบื้องต้นทันที ก่อนผลลัพธ์จากเครือข่าย */
+  if (state.history.length) {
+    state.data = {
+      barBuy: state.history[state.history.length - 1].price - 100,
+      barSell: state.history[state.history.length - 1].price,
+      ornBuy: state.history[state.history.length - 1].price * 0.98,
+      ornSell: state.history[state.history.length - 1].price * 1.03
+    };
+    state.analysis = analyze(state.history);
+    renderAll();
+  }
+
+  refresh(true);
+}
+
+document.addEventListener('DOMContentLoaded', boot);
+</script>
+</body>
+</html>
