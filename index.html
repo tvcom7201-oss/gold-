@@ -56,11 +56,25 @@
   .flash-up { animation: flashUp .8s ease; }
   .flash-down { animation: flashDown .8s ease; }
   .dashboard-board > div + div { margin-top: 1.25rem; }
-  @media (min-width: 1280px) {
+  /* แท็บเล็ตแนวนอน (1024px+) ขึ้นไป: จัดการ์ดเป็น 2 คอลัมน์แบบไหลอัตโนมัติ */
+  @media (min-width: 1024px) {
     .dashboard-board { column-count: 2; column-gap: 1.25rem; column-fill: balance; }
     .dashboard-board > div { display: contents; }
     .dashboard-board section,
     .dashboard-board p { break-inside: avoid; margin-bottom: 1.25rem; }
+  }
+  /* จอ 1024–1279px (ไอแพดแนวนอน/โน้ตบุ๊กเล็ก) คอลัมน์ยังแคบ: การ์ดที่มีการ์ดย่อย 3–4 ช่องให้กินเต็มความกว้าง */
+  @media (min-width: 1024px) and (max-width: 1279.98px) {
+    .dashboard-board section[data-wide] { column-span: all; }
+  }
+  /* ตารางที่มีคอลัมน์เยอะ: บนมือถือให้เลื่อนแนวนอนได้ ไม่บีบตัวอักษรจนอ่านไม่ออก */
+  @media (max-width: 767.98px) {
+    .table-scroll > table { min-width: 40rem; }
+    .table-scroll td, .table-scroll th { white-space: nowrap; }
+  }
+  /* จอใหญ่ระดับ 2K+: ใช้พื้นที่กว้างขึ้นเล็กน้อยให้การ์ดไม่ถูกบีบชิดขอบ */
+  @media (min-width: 1536px) {
+    .app-shell { max-width: 90rem; }
   }
   @keyframes flashUp { 0%{ background-color: rgba(34,197,94,.28);} 100%{ background-color: transparent;} }
   @keyframes flashDown { 0%{ background-color: rgba(244,63,94,.28);} 100%{ background-color: transparent;} }
@@ -78,7 +92,7 @@
 <!-- พื้นที่แสดงการแจ้งเตือนทันทีบนหน้าจอ -->
 <div id="toastHost" class="pointer-events-none fixed right-3 top-3 z-50 flex w-[min(92vw,23rem)] flex-col gap-2 sm:right-4 sm:top-4"></div>
 
-<div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:py-8">
+<div class="app-shell mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:py-8">
 
   <!-- ================= HEADER ================= -->
   <header class="mb-6">
@@ -127,7 +141,7 @@
   </header>
 
   <!-- ================= PRICE CARDS ================= -->
-  <section class="mb-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+  <section class="mb-6 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
     <div id="cardBarBuy" class="card p-4">
       <div class="flex items-center justify-between">
         <span class="text-[11px] font-medium uppercase tracking-wide text-slate-400">ทองแท่ง · รับซื้อ</span>
@@ -201,7 +215,7 @@
     <div class="space-y-5 xl:space-y-0 xl:col-span-7">
 
       <!-- SIGNAL -->
-      <section class="card card-gold overflow-hidden">
+      <section class="card card-gold overflow-hidden" data-wide>
         <div id="signalHeader" class="flex flex-wrap items-center justify-between gap-3 border-b border-white/5 px-5 py-4">
           <div class="flex items-center gap-3">
             <span id="signalEmoji" class="grid h-11 w-11 place-items-center rounded-xl bg-white/5 text-xl">⏳</span>
@@ -211,7 +225,7 @@
             </div>
           </div>
           <div class="text-right">
-            <div class="text-[11px] uppercase tracking-wider text-slate-400">ความมั่นใจ</div>
+            <div class="text-[11px] uppercase tracking-wider text-slate-400">คะแนนสัญญาณ</div>
             <div id="confidence" class="num font-display text-lg font-semibold text-gold">—</div>
           </div>
         </div>
@@ -274,7 +288,7 @@
       <section class="card p-5" aria-labelledby="sentimentTitle">
         <div class="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h2 id="sentimentTitle" class="font-display text-base font-semibold text-white">Thai Gold Fear &amp; Greed</h2>
+            <h2 id="sentimentTitle" class="font-display text-base font-semibold text-white">คะแนน RSI และความผันผวน</h2>
             <p class="text-[11px] text-slate-500">ประเมินจาก RSI (14) และความผันผวนของราคาที่บันทึกในเครื่อง</p>
           </div>
           <div class="text-right">
@@ -733,7 +747,7 @@
         </div>
         <p class="mt-3 text-[10px] leading-relaxed text-slate-600">
           Fair Price ต่อ 1 บาททองคำ = ((Gold Spot × 0.965 × 15.244) ÷ 31.1035) × USD/THB แล้วเทียบกับราคาขายออกทองแท่ง 96.5% ของสมาคมฯ<br>
-          แหล่งข้อมูลหลัก: goldtraders.or.th · ผ่าน AllOrigins และ DOMParser; สำรอง: Thai Gold API, Gold Spot/FX feeds
+          ราคาทองไทยใช้ประกาศสมาคมค้าทองคำโดยตรงหรือส่งผ่าน AllOrigins เมื่อเบราว์เซอร์เรียก API ตรงไม่ได้ · Spot/FX ใช้ผู้ให้บริการข้อมูลตลาดแยกต่างหาก
         </p>
       </div>
       <div class="lg:col-span-2">
@@ -752,7 +766,7 @@
       <div class="flex items-center gap-3">
         <span class="grid h-10 w-10 place-items-center rounded-xl bg-gold/15 text-lg text-gold">📅</span>
         <div>
-          <h2 class="font-display text-base font-semibold text-white">พยากรณ์ทิศทางราคาล่วงหน้า (ระบุวันที่)</h2>
+          <h2 class="font-display text-base font-semibold text-white">ประมาณการแนวโน้มราคาจากข้อมูลย้อนหลัง</h2>
           <p id="fcNote" class="text-[11px] text-slate-500">กำลังประมวลผล…</p>
         </div>
       </div>
@@ -779,12 +793,12 @@
         <div id="fcEndChg" class="text-[10px] text-slate-500 num">—</div>
       </div>
       <div class="rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-4 py-3">
-        <div class="text-[10px] uppercase tracking-wide text-emerald-300">วันที่มีโอกาสขึ้นสูงสุด</div>
+        <div class="text-[10px] uppercase tracking-wide text-emerald-300">วันที่แบบจำลองคาดขึ้นมากสุด</div>
         <div id="fcBestUp" class="mt-1 text-xs font-semibold text-emerald-200">—</div>
         <div id="fcBestUpVal" class="mt-0.5 text-[10px] text-slate-500 num">—</div>
       </div>
       <div class="rounded-xl border border-rose-500/20 bg-rose-500/5 px-4 py-3">
-        <div class="text-[10px] uppercase tracking-wide text-rose-300">วันที่มีโอกาสลงสูงสุด</div>
+        <div class="text-[10px] uppercase tracking-wide text-rose-300">วันที่แบบจำลองคาดลงมากสุด</div>
         <div id="fcBestDown" class="mt-1 text-xs font-semibold text-rose-200">—</div>
         <div id="fcBestDownVal" class="mt-0.5 text-[10px] text-slate-500 num">—</div>
       </div>
@@ -792,7 +806,7 @@
 
     <div class="grid grid-cols-1 gap-5 px-5 pb-5 lg:grid-cols-5">
       <div class="lg:col-span-3">
-        <div class="max-h-96 overflow-auto rounded-xl border border-white/5">
+        <div class="table-scroll max-h-96 overflow-auto rounded-xl border border-white/5">
           <table class="w-full text-left text-xs">
             <thead class="sticky top-0 bg-ink-700/95 text-[10px] uppercase tracking-wide text-slate-400 backdrop-blur">
               <tr>
@@ -801,7 +815,7 @@
                 <th class="px-3 py-2 text-right font-medium">ราคาคาดการณ์</th>
                 <th class="px-3 py-2 text-right font-medium">ช่วงคาดการณ์</th>
                 <th class="px-3 py-2 text-right font-medium">วันต่อวัน</th>
-                <th class="px-3 py-2 font-medium">โอกาสขึ้น</th>
+                <th class="px-3 py-2 text-right font-medium">เปลี่ยนสะสม</th>
               </tr>
             </thead>
             <tbody id="forecastBody" class="divide-y divide-white/5 text-slate-300"></tbody>
@@ -817,8 +831,8 @@
     </div>
 
     <div class="border-t border-white/5 px-5 py-3 text-[10px] leading-relaxed text-slate-600">
-      โมเดลผสม (trend + momentum + mean reversion) อ้างอิงราคาปิดรายวัน · ช่วงคาดการณ์คือกรอบความเชื่อมั่นประมาณ 80%<br>
-      ผลลัพธ์เป็นสถิติเชิงความน่าจะเป็น ไม่ใช่การรับประกัน และไม่ได้รวมวันหยุดนักขัตฤกษ์
+      ประมาณการจากแนวโน้มและความผันผวนของราคาปิดรายวันจริงจากสมาคมฯ · ช่วงราคาเป็นช่วงจำลองจากความผันผวนย้อนหลัง ไม่ใช่กรอบความเชื่อมั่นที่ผ่านการสอบเทียบ<br>
+      ผลลัพธ์เป็นแบบจำลองทางสถิติ ไม่ใช่ราคาตลาดในอนาคตหรือคำแนะนำลงทุน และไม่ได้รวมวันหยุดนักขัตฤกษ์
     </div>
   </section>
 
@@ -933,7 +947,7 @@
 
       <!-- ตารางรายการ -->
       <div class="xl:col-span-3">
-        <div class="max-h-[420px] overflow-auto rounded-xl border border-white/5">
+        <div class="table-scroll max-h-[420px] overflow-auto rounded-xl border border-white/5">
           <table class="w-full text-left text-xs">
             <thead class="sticky top-0 bg-ink-700/95 text-[10px] uppercase tracking-wide text-slate-400 backdrop-blur">
               <tr>
@@ -969,6 +983,9 @@
         </div>
       </div>
       <div class="flex shrink-0 items-center gap-1">
+      <button id="goldChatClear" type="button" aria-label="ล้างประวัติแชท" class="grid h-8 w-8 place-items-center rounded-lg text-slate-400 transition hover:bg-white/10 hover:text-rose-300" title="ล้างประวัติแชท">
+        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2m3 0-.9 14H5.9L5 6m4 4v6m6-6v6"/></svg>
+      </button>
       <button id="goldChatSettingsToggle" type="button" aria-label="ตั้งค่า Gemini" aria-expanded="false" aria-controls="goldChatSettings" class="grid h-8 w-8 place-items-center rounded-lg text-slate-400 transition hover:bg-white/10 hover:text-gold">
         <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="m19.4 15 .1.1a1.7 1.7 0 0 1-2.4 2.4l-.1-.1a1.7 1.7 0 0 0-2.9 1.2v.2a1.7 1.7 0 0 1-3.4 0v-.2a1.7 1.7 0 0 0-2.9-1.2l-.1.1a1.7 1.7 0 0 1-2.4-2.4l.1-.1a1.7 1.7 0 0 0-1.2-2.9H4a1.7 1.7 0 0 1 0-3.4h.2a1.7 1.7 0 0 0 1.2-2.9l-.1-.1a1.7 1.7 0 0 1 2.4-2.4l.1.1a1.7 1.7 0 0 0 2.9-1.2V2a1.7 1.7 0 0 1 3.4 0v.2a1.7 1.7 0 0 0 2.9 1.2l.1-.1a1.7 1.7 0 0 1 2.4 2.4l-.1.1a1.7 1.7 0 0 0 1.2 2.9h.2a1.7 1.7 0 0 1 0 3.4h-.2a1.7 1.7 0 0 0-1.2 2.9Z"/></svg>
       </button>
@@ -1029,7 +1046,7 @@
       </div>
     </div>
     <div id="goldChatMessages" class="chat-scroll min-h-0 flex-1 space-y-3 overflow-y-auto px-3 py-3" role="log" aria-live="polite" aria-relevant="additions">
-      <div class="chat-bubble max-w-[92%] rounded-2xl rounded-tl-md border border-white/5 bg-white/5 px-3 py-2.5 text-xs leading-relaxed text-slate-300">สวัสดีครับ ผมช่วยอ่านราคาสมาคม, RSI, Fear &amp; Greed และแนวรับ/แนวต้านบนหน้านี้ได้ คำตอบเป็นข้อมูลประกอบ ไม่ใช่คำแนะนำลงทุนเฉพาะบุคคล</div>
+      <div class="chat-bubble max-w-[92%] rounded-2xl rounded-tl-md border border-white/5 bg-white/5 px-3 py-2.5 text-xs leading-relaxed text-slate-300">สวัสดีครับ ผมช่วยอ่านราคาสมาคม, RSI, คะแนน RSI/ความผันผวน และแนวรับ/แนวต้านบนหน้านี้ได้ คำตอบเป็นข้อมูลประกอบ ไม่ใช่คำแนะนำลงทุนเฉพาะบุคคล</div>
     </div>
     <form id="goldChatForm" class="flex items-end gap-2 border-t border-white/5 bg-ink-900/70 p-3">
       <label for="goldChatInput" class="sr-only">พิมพ์คำถาม</label>
@@ -1077,13 +1094,11 @@ const CFG = {
   SMA_SLOW: 20,
   GRAM_PER_BAHT: 15.244,
   REQUEST_TIMEOUT: 8000,
-  PROXY_TIMEOUT: 3000,
+  PROXY_TIMEOUT: 8000,
 
   /* พยากรณ์รายวัน */
   DAILY_KEY: 'goldsignal_daily_v1',
   FORECAST_DAYS: 7,
-  BOOTSTRAP_DAYS: 70,
-  DAILY_VOL: 0.0085,
   CONFIDENCE_Z: 1.28,     /* ช่วงคาดการณ์ ~80% */
 
   /* ตลาดโลก */
@@ -1092,12 +1107,19 @@ const CFG = {
   TROY_OZ_GRAMS: 31.1034768,
   PURITY_965: 0.965,       /* ทองคำแท่งไทยความบริสุทธิ์ 96.5% */
   XAU_API: 'https://api.gold-api.com/price/XAU',
+  XAU_CDN: 'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/xau.json',
   FX_API: 'https://open.er-api.com/v6/latest/USD',
   FX_CDN: 'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@',
   YLG_API: 'https://register.ylgbullion.co.th/api/price/gold',
 
   /* บันทึกการซื้อขาย */
   TRADES_KEY: 'goldsignal_trades_v1',
+
+  /* แชท Gold AI */
+  GOLDCHAT_KEY: 'goldsignal_goldchat_v1',
+
+  /* ระบบตรวจสอบข้อมูลแบบเรียลไทม์ */
+  DATA_CHECK_KEY: 'goldsignal_data_check_v1',
 
   /* การแจ้งเตือนราคา */
   ALERTS_KEY: 'goldsignal_alerts_v1',
@@ -1118,34 +1140,16 @@ const GEMINI_DEFAULT_MODEL = 'gemini-3.5-flash-lite';
 const GEMINI_PRIVATE_CONTEXT_SESSION_KEY = 'goldsignal_gemini_private_context_session_v1';
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models/';
 
-/* Thai Gold API สำรอง หาก proxy หรือบริการสมาคมไม่พร้อมใช้งาน */
-const ENDPOINTS = [
-  'https://api.chnwt.dev/thai-gold-api/latest',
-  'https://api.chnwt.dev/thai-gold-api/price/latest'
-];
-
-/* ราคาตั้งต้นของโหมดจำลอง (บาท / 1 บาททองคำ) */
-const MOCK_BASE = { barBuy: 67650, barSell: 67850, ornBuy: 66295, ornSell: 68650 };
-
-/**
- * Seeded random number generator สำหรับสร้างข้อมูลจำลองแบบ deterministic
- * ใช้วิธี mulberry32 เพื่อให้ได้ค่าเดียวกันเสมอเมื่อใช้ seed เดียวกัน
- */
-function seededRandom(seed) {
-  let t = seed += 0x6D2B79F5;
-  t = Math.imul(t ^ t >>> 15, t | 1);
-  t ^= t + Math.imul(t ^ t >>> 7, t | 61);
-  return ((t ^ t >>> 14) >>> 0) / 4294967296;
-}
-
 const state = {
   data: null,        // { barBuy, barSell, ornBuy, ornSell }
   history: [],       // [{ t, price, seed }]  — ระดับนาที
-  daily: [],         // [{ date, close, synthetic }] — ระดับวัน (ใช้พยากรณ์)
+  daily: [],         // [{ date, close }] — ราคาปิดจริงจาก OHLC สมาคมฯ
   forecast: null,
   forecastDays: 7,
   analysis: null,
-  source: 'mock',    // 'api' | 'mock'
+  analysisMeta: null,   // { source: 'daily'|'intraday', count, label } — ที่มาของข้อมูลที่ใช้วิเคราะห์
+  source: 'offline', // 'goldtraders' | 'offline'
+  sourceTransport: null,
   lastUpdated: null,
   autoRefresh: true,
   countdown: CFG.REFRESH_SEC,
@@ -1164,11 +1168,12 @@ const state = {
     xau: null, xauUpdated: null, usdthb: null, fxDate: null,
     fxSeries: [], seriesLoaded: false, xauChg: null,
     chg1: null, chg7: null, chg30: null,
-    fair: null, premiumPct: null, premiumBaht: null,
+    fair: null, premiumPct: null, premiumBaht: null, xauSource: null,
     error: null, loading: false
   },
   macroSnaps: [],       // [{ t, xau, usdthb }] เก็บเป็นประวัติเพื่อเทียบแนวโน้ม
   ylgQuote: null,
+  ylgSpot: null,        // [{ price, updated }] ราคา Spot ของ YLG ใช้เป็นแหล่งสำรองของทองโลก
   ylgError: null,
   ylgHistory: [],
   officialOhlc: [],
@@ -1177,7 +1182,14 @@ const state = {
   goldChatTurns: [],
 
   /* บันทึกการซื้อขาย */
-  trades: []
+  trades: [],
+
+  /* ระบบตรวจสอบข้อมูลแบบเรียลไทม์ */
+  dataCheck: {
+    lastCheck: null,
+    lastComparison: null,
+    comparisonHistory: []
+  }
 };
 
 /* ---------------- Utilities ---------------- */
@@ -1356,32 +1368,76 @@ function analyze(history) {
   };
 }
 
+/** ชุดข้อมูลที่ใช้วิเคราะห์สัญญาณ: ราคาปิดรายวันจริงจากสมาคมฯ ก่อน ถ้ายังไม่พอจึงใช้ราคาที่เก็บในเครื่อง */
+function analysisDataset() {
+  const daily = state.daily.filter(d => d && !d.synthetic && d.date && Number.isFinite(d.close) && d.close > 0);
+  if (daily.length >= CFG.RSI_PERIOD + 3 && state.officialOhlcUpdated && Date.now() - state.officialOhlcUpdated < 4 * 86400000) {
+    const points = daily.slice(-120).map(d => ({
+      t: Date.parse(d.date + 'T17:00:00'),
+      price: d.close,
+      daily: true
+    }));
+    return { points, source: 'daily', count: points.length, label: 'ราคาปิดรายวันจากสมาคมฯ ' + points.length + ' วัน' };
+  }
+  const points = state.history.filter(p => p && Number.isFinite(p.price) && p.price > 0);
+  return {
+    points,
+    source: 'intraday',
+    count: points.filter(p => !p.seed).length,
+    label: 'ราคาที่เก็บในเครื่อง ' + points.length + ' จุด'
+  };
+}
+
+/** รันการวิเคราะห์และจำที่มาของข้อมูลไว้ให้หน้าจออธิบายได้ */
+function runAnalysis() {
+  const ds = analysisDataset();
+  const a = analyze(ds.points);
+  state.analysis = a;
+  state.analysisMeta = { source: ds.source, count: ds.count, label: ds.label };
+  return a;
+}
+
+function analysisCount() {
+  return state.analysisMeta ? state.analysisMeta.count : 0;
+}
+
+function analysisLabel() {
+  return state.analysisMeta ? state.analysisMeta.label : '';
+}
+
+function analysisIsDaily() {
+  return !!state.analysisMeta && state.analysisMeta.source === 'daily';
+}
+
 function renderSentiment(a) {
-  const observations = state.history.filter(point => !point.seed).length;
+  const observations = analysisCount();
   if (!a || a.rsi == null || observations < CFG.RSI_PERIOD + 1) {
     $('sentimentValue').textContent = '—';
     $('sentimentLabel').textContent = 'รอข้อมูลจริง';
-    $('sentimentNote').textContent = 'สะสมข้อมูลราคาได้ ' + observations + ' / ' + (CFG.RSI_PERIOD + 1) + ' จุดก่อนคำนวณ RSI และ Fear & Greed';
+    $('sentimentNote').textContent = 'สะสมข้อมูลราคาได้ ' + observations + ' / ' + (CFG.RSI_PERIOD + 1) + ' จุดก่อนคำนวณคะแนน RSI/ความผันผวน';
     return;
   }
-  const volatilityFear = clamp((a.vol / 0.6) * 24, 0, 24);
+  /* ความผันผวนรายวันสูงกว่าความผันผวนราย tick — ปรับสเกลไม่ให้คะแนนถูกกดจนไม่เหลือข้อมูล */
+  const volScale = analysisIsDaily() ? 1.6 : 0.6;
+  const volatilityFear = clamp((a.vol / volScale) * 24, 0, 24);
   const score = Math.round(clamp(50 + (a.rsi - 50) * 0.75 - volatilityFear, 0, 100));
-  const label = score <= 20 ? 'กลัวมาก (Extreme Fear)'
-    : score <= 40 ? 'ตลาดกลัว (Fear)'
-      : score <= 60 ? 'เป็นกลาง (Neutral)'
-        : score <= 80 ? 'ตลาดโลภ (Greed)' : 'โลภมาก (Extreme Greed)';
+  const label = score <= 20 ? 'ต่ำมาก'
+    : score <= 40 ? 'ค่อนข้างต่ำ'
+      : score <= 60 ? 'ปานกลาง'
+        : score <= 80 ? 'ค่อนข้างสูง' : 'สูงมาก';
   $('sentimentValue').textContent = score + ' / 100';
   $('sentimentLabel').textContent = label;
   $('sentimentLabel').className = 'text-xs font-semibold ' + (score <= 40 ? 'text-rose-300' : score >= 61 ? 'text-emerald-300' : 'text-amber-300');
   $('sentimentMarker').style.marginLeft = 'calc(' + score + '% - 3px)';
-  $('sentimentNote').textContent = 'RSI ' + fmt2(a.rsi) + ' · ความผันผวน ' + fmt2(a.vol) + '% ต่อรอบ' +
-    (state.source === 'mock' ? ' · ขณะนี้ใช้ราคา/ประวัติจำลอง ดัชนีจึงไม่ใช่ภาวะตลาดจริง' : ' · ความผันผวนสูงกดคะแนนลงเพื่อสะท้อนความเสี่ยง');
+  $('sentimentNote').textContent = 'RSI ' + fmt2(a.rsi) + ' · ความผันผวน ' + fmt2(a.vol) + (analysisIsDaily() ? '% ต่อวัน' : '% ต่อรอบ') +
+    ' · ข้อมูล: ' + analysisLabel() +
+    ' · ความผันผวนสูงกดคะแนนลงเพื่อสะท้อนความเสี่ยง';
 }
 
 function renderRiskMatrix() {
   const entry = toNumber($('riskEntry').value);
   const a = state.analysis;
-  const observations = state.history.filter(point => !point.seed).length;
+  const observations = analysisCount();
   if (!entry || entry <= 0 || !a || observations < CFG.RSI_PERIOD + 1) {
     ['riskTp1', 'riskTp1Pct', 'riskTp2', 'riskTp2Pct', 'riskSl', 'riskSlPct', 'riskMatrixRatio'].forEach(id => { $(id).textContent = '—'; });
     $('riskMatrixNote').textContent = entry && observations < CFG.RSI_PERIOD + 1
@@ -1404,14 +1460,15 @@ function renderRiskMatrix() {
   $('riskSlPct').textContent = signed(pct(stop), 2) + '%';
   $('riskMatrixRatio').textContent = '1 : ' + fmt2((tp1 - entry) / risk);
   $('riskMatrixNote').textContent = 'อิงแนวรับ ' + fmt0(a.support) + ' / แนวต้าน ' + fmt0(a.resistance) +
-    ' และความผันผวนล่าสุด' + (state.source === 'mock' ? ' · ข้อมูลราคาปัจจุบันเป็นข้อมูลจำลอง' : '') + ' · ระดับราคาเป็นค่าประมาณ ไม่รับประกันผล';
+    ' จากข้อมูล ' + analysisLabel() + ' · ระดับราคาเป็นค่าประมาณ ไม่รับประกันผล';
 }
 
 function getGoldAssistantContext() {
   const analysis = state.analysis;
-  const observations = state.history.filter(point => !point.seed).length;
+  const observations = analysisCount();
+  const volScale = analysisIsDaily() ? 1.6 : 0.6;
   const sentimentScore = analysis && analysis.rsi != null && observations >= CFG.RSI_PERIOD + 1
-    ? Math.round(clamp(50 + (analysis.rsi - 50) * 0.75 - clamp((analysis.vol / 0.6) * 24, 0, 24), 0, 100))
+    ? Math.round(clamp(50 + (analysis.rsi - 50) * 0.75 - clamp((analysis.vol / volScale) * 24, 0, 24), 0, 100))
     : null;
   const entry = toNumber($('riskEntry').value) || toNumber($('calcBuyPrice').value) || toNumber($('beBuyPrice').value);
   let riskPlan = null;
@@ -1458,7 +1515,7 @@ function goldAssistantMarketSummary(context) {
   if (context.currentPrice != null) lines.push('ทองแท่งสมาคมขายออก ' + fmt0(context.currentPrice) + ' บาท · รับซื้อ ' + fmt0(context.barBuy) + ' บาท');
   if (context.spot != null) lines.push('Spot $' + fmt2(context.spot) + (context.usdthb != null ? ' · USD/THB ' + fmt2(context.usdthb) : ''));
   if (context.analysis && context.analysis.rsi != null) lines.push('RSI ' + fmt2(context.analysis.rsi) + ' · แนวรับ ' + fmt0(context.analysis.support) + ' · แนวต้าน ' + fmt0(context.analysis.resistance));
-  if (context.sentimentScore != null) lines.push('Fear & Greed ' + context.sentimentScore + '/100');
+  if (context.sentimentScore != null) lines.push('คะแนน RSI/ความผันผวน ' + context.sentimentScore + '/100');
   return lines.length ? lines.join('\n') : 'ยังโหลดข้อมูลตลาดไม่ครบ ลองถามอีกครั้งหลังราคาอัปเดต';
 }
 
@@ -1502,7 +1559,7 @@ function getGeminiWebsiteContext() {
     },
     technical: analysis ? {
       rsi14: analysis.rsi, volatilityPctPerObservation: analysis.vol,
-      fearGreedScore: c.sentimentScore, fearGreedLabel: $('sentimentLabel').textContent,
+      rsiVolatilityScore: c.sentimentScore, rsiVolatilityLabel: $('sentimentLabel').textContent,
       sma5: analysis.smaFast, sma20: analysis.smaSlow, support: analysis.support, resistance: analysis.resistance,
       signal: analysis.signal.label, confidencePct: analysis.confidence, reasons: analysis.reasons
     } : null,
@@ -1515,8 +1572,8 @@ function getGeminiWebsiteContext() {
       recentSelectedBars: selectedBars
     },
     forecast: forecast ? {
-      days: forecast.days.map(day => ({ date: dateKey(day.date), price: Math.round(day.price), low: Math.round(day.low), high: Math.round(day.high), changePct: day.changePct, probabilityUpPct: day.pUp })),
-      trendUp: forecast.up, trendProbabilityPct: forecast.trendProb, syntheticDailyDataPresent: forecast.hasSynthetic
+      days: forecast.days.map(day => ({ date: dateKey(day.date), price: Math.round(day.price), low: Math.round(day.low), high: Math.round(day.high), changePct: day.changePct })),
+      trendUp: forecast.up, realHistoryDays: forecast.realDays
     } : null,
     calculatorInputs: {
       riskEntry: toNumber($('riskEntry').value), riskTp1: $('riskTp1').textContent,
@@ -1605,6 +1662,7 @@ async function sendGoldGeminiMessage(question, bubble) {
   if (!apiKey) {
     bubble.textContent = answerGoldAssistant(question);
     state.goldChatTurns.push({ role: 'user', text: question }, { role: 'model', text: bubble.textContent });
+    saveGoldChat(); // บันทึกประวัติแชท
     return;
   }
   bubble.textContent = 'กำลังอ่านข้อมูลหน้าเว็บและวิเคราะห์ด้วย Gemini…';
@@ -1612,10 +1670,12 @@ async function sendGoldGeminiMessage(question, bubble) {
     const answer = await callGemini(geminiContents(question), apiKey, selectedGeminiModel(), 1600);
     bubble.textContent = answer;
     state.goldChatTurns.push({ role: 'user', text: question }, { role: 'model', text: answer });
+    saveGoldChat(); // บันทึกประวัติแชท
   } catch (err) {
     const fallback = answerGoldAssistant(question);
     bubble.textContent = 'Gemini ใช้งานไม่ได้: ' + (err && err.name === 'AbortError' ? 'หมดเวลารอคำตอบ' : err.message) + '\n\nคำตอบสำรองจากข้อมูลในหน้า:\n' + fallback;
     state.goldChatTurns.push({ role: 'user', text: question }, { role: 'model', text: fallback });
+    saveGoldChat(); // บันทึกประวัติแชท
   }
   const host = $('goldChatMessages');
   host.scrollTop = host.scrollHeight;
@@ -1625,11 +1685,9 @@ function answerGoldAssistant(question) {
   const text = String(question || '').toLowerCase().replace(/[؟?！!]/g, ' ');
   const c = getGoldAssistantContext();
   const a = c.analysis;
-  const sourceWarning = c.source === 'mock'
-    ? '\nหมายเหตุ: ราคาหน้าจอเป็นข้อมูลจำลอง จึงไม่ควรใช้ตัดสินใจลงทุน'
-    : c.source === 'fallback'
-      ? '\nหมายเหตุ: ราคาสมาคมขณะนี้อ่านจาก Thai Gold API สำรอง'
-      : '';
+  const sourceWarning = c.source === 'offline'
+    ? '\nหมายเหตุ: ขณะนี้เชื่อมต่อแหล่งประกาศสมาคมไม่ได้ จึงไม่มีราคาปัจจุบันให้ใช้อ้างอิง'
+    : '';
   const freshness = c.quoteTime ? 'ข้อมูลหน้าเว็บอัปเดต ' + dateTimeLabel(c.quoteTime) + ' · ' + c.announcement : '';
 
   if (/ค่าบล็อก|ค่ากำเหน็จ|ค่ากำหนด/.test(text)) {
@@ -1647,12 +1705,11 @@ function answerGoldAssistant(question) {
       '\nหากยังถือขาดทุน อย่าเพิ่มไม้เพียงเพื่อถัวเฉลี่ยโดยไม่มีวงเงินเสี่ยง กำหนดขนาดสถานะจากเงินที่ยอมขาดทุนได้ ÷ (ต้นทุนต่อบาท − จุดตัดขาดทุน) และอาจแบ่งเข้าซื้อ 3 ไม้เท่า ๆ กัน แทนการลงเงินครั้งเดียว ระดับเหล่านี้เป็นการคำนวณ ไม่ได้รับประกันผล' + sourceWarning;
   }
   if (/ควรซื้อ|ซื้อวันนี้|ซื้อตอนไหน|จังหวะซื้อ|ซื้อทอง|เข้าซื้อ/.test(text)) {
-    if (!a || c.sentimentScore == null) return 'ยังมีข้อมูลราคาที่สังเกตจริงไม่พอสำหรับ RSI/Fear & Greed ครับ รอข้อมูลสะสมเพิ่มก่อน ผมไม่อยากสรุปจังหวะซื้อจากราคาไม่กี่จุด' + sourceWarning;
+    if (!a || c.sentimentScore == null) return 'ยังมีข้อมูลราคาจริงไม่พอสำหรับ RSI/ความผันผวนครับ รอข้อมูลสะสมเพิ่มก่อน ผมไม่อยากสรุปจังหวะซื้อจากราคาไม่กี่จุด' + sourceWarning;
     const lines = ['ข้อมูลตอนนี้: ' + goldAssistantMarketSummary(c)];
-    if (c.sentimentScore > 80) lines.push('คะแนนอยู่โซน Extreme Greed เสี่ยงไล่ราคาหรือซื้อใกล้ยอด ไม่ควรเข้าก้อนเดียว');
-    else if (c.sentimentScore > 60) lines.push('บรรยากาศเอนเอียงไปทาง Greed ควรระวังการไล่ราคา');
-    else if (c.sentimentScore < 25) lines.push('ตลาดอยู่โซนกลัวมาก แต่ความกลัวสูงไม่ได้แปลว่าราคาถึงจุดต่ำสุด');
-    else lines.push('คะแนนยังไม่อยู่โซนโลภจัดหรือกลัวจัด จึงไม่มีสัญญาณจากดัชนีเพียงตัวเดียว');
+    if (c.sentimentScore > 80) lines.push('คะแนน RSI/ความผันผวนอยู่ระดับสูง ควรระวังการไล่ราคา');
+    else if (c.sentimentScore < 25) lines.push('คะแนนอยู่ระดับต่ำ ซึ่งไม่ได้ยืนยันว่าราคาถึงจุดต่ำสุด');
+    else lines.push('คะแนนอยู่ระดับกลาง จึงยังไม่มีข้อสรุปจากตัวชี้วัดนี้เพียงตัวเดียว');
     if (c.premiumPct != null) lines.push('ราคาสมาคม ' + (c.premiumPct > 0 ? 'สูงกว่า' : 'ต่ำกว่าหรือใกล้') + ' Fair Price ' + signed(c.premiumPct, 2) + '% (' + signed(c.premiumBaht, 0) + ' บาท)');
     lines.push('แนวทางลดความเสี่ยง: แบ่งเงินเป็น 3 ไม้ รอราคาย่อลงใกล้แนวรับและตั้งจุดยอมขาดทุนก่อนซื้อ ไม่สามารถยืนยันได้ว่าวันนี้เป็นจุดต่ำสุดครับ');
     if (freshness) lines.push(freshness);
@@ -1678,7 +1735,7 @@ function answerGoldAssistant(question) {
       (c.premiumPct != null ? '\nราคาสมาคมเทียบ Fair Price ' + signed(c.premiumPct, 2) + '% (' + signed(c.premiumBaht, 0) + ' บาท)' : '') + sourceWarning;
   }
   if (/สวัสดี|ช่วยอะไร|ทำอะไรได้|hello|hi\b/.test(text)) {
-    return 'ผมช่วยอ่านราคาสมาคม, Spot/ค่าเงิน, RSI, Fear & Greed, แนวรับ/แนวต้าน และคำนวณ TP/SL จากต้นทุนที่กรอกไว้ได้ครับ ลองถามว่า “วันนี้ควรซื้อไหม”, “ประเมินความเสี่ยง” หรือ “วิเคราะห์แนวโน้มทองคำ”';
+    return 'ผมช่วยอ่านราคาสมาคม, Spot/ค่าเงิน, RSI, คะแนน RSI/ความผันผวน, แนวรับ/แนวต้าน และคำนวณ TP/SL จากต้นทุนที่กรอกไว้ได้ครับ ลองถามว่า “วันนี้ควรซื้อไหม”, “ประเมินความเสี่ยง” หรือ “วิเคราะห์แนวโน้มทองคำ”';
   }
   return 'ผมตอบจากข้อมูลที่หน้าเว็บมีและกฎวิเคราะห์ในเครื่องครับ ลองระบุว่าต้องการถามเรื่อง “ซื้อ”, “ขาย”, “ความเสี่ยง/ขาดทุน”, “แนวโน้ม/กราฟ”, “ค่าเงิน/Spot” หรือ “ค่าบล็อก” เพื่อให้วิเคราะห์ได้ตรงขึ้น' + sourceWarning;
 }
@@ -1715,7 +1772,10 @@ function setGoldChatOpen(open) {
   panel.setAttribute('aria-hidden', String(!open));
   toggle.setAttribute('aria-expanded', String(open));
   toggle.setAttribute('aria-label', open ? 'ปิด Gold Smart AI Assistant' : 'เปิด Gold Smart AI Assistant');
-  if (open) $('goldChatInput').focus();
+  if (open) {
+    $('goldChatInput').focus();
+    renderGoldChatHistory(); // แสดงประวัติแชทเมื่อเปิด
+  }
 }
 
 function hideGoldChatMessageMenu() {
@@ -1763,6 +1823,11 @@ function wireGoldAssistant() {
     setGoldChatOpen($('goldChatPanel').classList.contains('hidden'));
   });
   $('goldChatClose').addEventListener('click', () => setGoldChatOpen(false));
+  $('goldChatClear').addEventListener('click', () => {
+    if (confirm('ต้องการล้างประวัติแชททั้งหมดหรือไม่?')) {
+      clearGoldChat();
+    }
+  });
   $('goldChatSettingsToggle').addEventListener('click', () => {
     const settings = $('goldChatSettings');
     const open = settings.classList.contains('hidden');
@@ -1928,10 +1993,13 @@ async function fetchTextWithTimeout(url, ms) {
 }
 
 function parseOfficialOhlc(responseText) {
-  const start = responseText.indexOf('[{');
-  const end = responseText.lastIndexOf(']');
-  if (start < 0 || end < start) return [];
-  const rows = JSON.parse(responseText.slice(start, end + 1));
+  let rows;
+  try { rows = JSON.parse(responseText.trim()); } catch (err) {
+    const start = responseText.search(/\[\s*\{/);
+    const end = responseText.lastIndexOf(']');
+    if (start < 0 || end < start) return [];
+    rows = JSON.parse(responseText.slice(start, end + 1));
+  }
   if (!Array.isArray(rows)) return [];
   return rows.map(row => ({
     t: Date.parse(row.hour),
@@ -1978,9 +2046,14 @@ async function refreshOfficialOhlc(force) {
   console.log('[DEBUG] กำลังดึงข้อมูล OHLC จากสมาคม...');
   state.officialOhlcLoading = true;
   try {
-    const url = JINA_PROXY + 'goldtraders.or.th/api/GoldPrices/ohlc?readjson=true';
-    console.log('[DEBUG] OHLC URL:', url);
-    const text = await fetchTextWithTimeout(url, 20000);
+    let text = '';
+    try {
+      text = await fetchTextWithTimeout(GOLDTRADERS_OHLC, CFG.REQUEST_TIMEOUT);
+      if (!parseOfficialOhlc(text).length) throw new Error('รูปแบบ OHLC ไม่ถูกต้อง');
+    } catch (directError) {
+      const url = JINA_PROXY + 'goldtraders.or.th/api/GoldPrices/ohlc?readjson=true';
+      text = await fetchTextWithTimeout(url, 20000);
+    }
     console.log('[DEBUG] OHLC data length:', text.length);
     const points = parseOfficialOhlc(text);
     console.log('[DEBUG] OHLC parsed points:', points.length);
@@ -2010,71 +2083,6 @@ async function refreshOfficialOhlc(force) {
   }
 }
 
-function pickPair(obj) {
-  if (!obj || typeof obj !== 'object') return null;
-  const buy = toNumber(obj.buy ?? obj.Buy ?? obj.buy_price ?? obj.price_buy ?? obj.กําไร);
-  const sell = toNumber(obj.sell ?? obj.Sell ?? obj.sell_price ?? obj.price_sell);
-  if (buy == null || sell == null) return null;
-  return { buy, sell };
-}
-
-/** รองรับ API หลายรูปแบบ (chnwt ฯลฯ) — คืนค่า {barBuy,...} หรือ null */
-function parsePayload(json) {
-  if (!json) return null;
-  const root = json.response ?? json.data ?? json.result ?? json;
-  const p = root.price ?? root.prices ?? root;
-
-  const rawBar = p.gold_bar ?? p.goldBar ?? p.goldBar9999 ?? p.bar ?? p['ทองแท่ง'];
-  const rawOrn = p.gold_ornament ?? p.goldOrnament ?? p.ornament ?? p.jewelry ?? p['ทองรูปพรรณ'] ?? p['ทองรูปพรรณ96.5'];
-
-  let bar = pickPair(rawBar);
-  let orn = pickPair(rawOrn);
-
-  /* บาง API (เช่น chnwt) ส่ง field `gold` หมายถึงทองรูปพรรณ โดยมี `gold_bar` แยกต่างหาก */
-  if (!bar && !orn) bar = pickPair(p.gold);
-  else if (bar && !orn) orn = pickPair(p.gold);
-
-  if (!bar && !orn) return null;
-
-  const base = bar || orn;
-  const ornPair = orn || { buy: base.buy * 0.968, sell: base.sell * 1.048 };
-  const barPair = bar || { buy: ornPair.buy * 1.033, sell: ornPair.sell * 0.953 };
-
-  const updated = root.update_time ?? root.updateTime ?? root.time ?? root.date ?? null;
-  const announcementTime = [root.update_date ?? root.updateDate, updated].filter(Boolean).join(' ');
-
-  return {
-    barBuy: barPair.buy,
-    barSell: barPair.sell,
-    ornBuy: ornPair.buy,
-    ornSell: ornPair.sell,
-    apiTime: announcementTime || null,
-    announcementTime: announcementTime || null,
-    announcementSeq: Number.isFinite(Number(root.seq ?? root.priceSeq)) ? Number(root.seq ?? root.priceSeq) : null,
-    goldSpot: toNumber(root.goldSpot ?? root.gold_spot),
-    usdthb: toNumber(root.bahtPerUSD ?? root.usdthb)
-  };
-}
-
-let mockDrift = 0;
-let mockRngCounter = 12345; // seed เริ่มต้นแบบ deterministic
-
-function mockPayload() {
-  // ใช้ seeded random เพื่อความ deterministic เมื่อใช้โหมด mock
-  mockDrift += (seededRandom(mockRngCounter++) - 0.5) * 60;
-  mockDrift = Math.max(-320, Math.min(320, mockDrift * 0.92));
-  const t = Date.now() / 60000;
-  const wave = Math.sin(t / 17) * 90 + Math.sin(t / 5.3) * 28;
-  const shift = mockDrift + wave;
-  return {
-    barBuy: Math.round(MOCK_BASE.barBuy + shift),
-    barSell: Math.round(MOCK_BASE.barSell + shift),
-    ornBuy: Math.round(MOCK_BASE.ornBuy + shift),
-    ornSell: Math.round(MOCK_BASE.ornSell + shift),
-    apiTime: null
-  };
-}
-
 function parseGoldTradersHtml(html) {
   const doc = new DOMParser().parseFromString(html, 'text/html');
   const text = (doc.body ? doc.body.textContent : '').replace(/\s+/g, ' ');
@@ -2097,6 +2105,7 @@ function parseGoldTradersHtml(html) {
     barBuy, barSell, ornBuy, ornSell,
     apiTime: announcementTime,
     announcementTime,
+    updatedAt: announcement ? new Date(Number(announcement[1].split('/')[2]) - 543, Number(announcement[1].split('/')[1]) - 1, Number(announcement[1].split('/')[0]), Number(announcement[2].split(':')[0]), Number(announcement[2].split(':')[1])).getTime() : null,
     announcementSeq: announcement ? Number(announcement[3]) : null,
     goldSpot: xau,
     usdthb
@@ -2117,6 +2126,7 @@ function parseGoldTradersApi(payload) {
     barBuy, barSell, ornBuy, ornSell,
     apiTime: announcementTime,
     announcementTime,
+    updatedAt: rawTime && Number.isFinite(Date.parse(rawTime)) ? Date.parse(rawTime) : null,
     announcementSeq: Number.isFinite(Number(row.seq)) ? Number(row.seq) : null,
     goldSpot: toNumber(row.goldSpot),
     usdthb: toNumber(row.bahtPerUSD),
@@ -2129,12 +2139,19 @@ function parseGoldTradersApi(payload) {
 }
 
 async function fetchGoldTradersData() {
-  console.log('[DEBUG] กำลังดึงข้อมูลจากสมาคมค้าทองคำ...');
+  // Use the association's published JSON endpoint directly first.
+  try {
+    const payload = await fetchWithTimeout(GOLDTRADERS_LATEST + '&t=' + Date.now(), CFG.REQUEST_TIMEOUT);
+    const data = parseGoldTradersApi(payload);
+    if (data) { data.transport = 'direct'; return data; }
+  } catch (err) {
+    console.warn('[GoldSignal] direct Gold Traders request failed:', err && err.message);
+  }
   const targets = [
-    { url: GOLDTRADERS_HOME, parse: parseGoldTradersHtml },
     { url: GOLDTRADERS_LATEST + '&t=' + Date.now(), parse: contents => {
       try { return parseGoldTradersApi(JSON.parse(contents)); } catch (err) { return null; }
-    } }
+    } },
+    { url: GOLDTRADERS_HOME, parse: parseGoldTradersHtml }
   ];
   for (const target of targets) {
     try {
@@ -2147,6 +2164,7 @@ async function fetchGoldTradersData() {
       const data = target.parse(envelope.contents);
       if (data) {
         console.log('[DEBUG] ดึงข้อมูลสมาคมสำเร็จ:', data);
+        data.transport = 'allorigins';
         return data;
       }
     } catch (err) {
@@ -2159,18 +2177,8 @@ async function fetchGoldTradersData() {
 
 async function fetchLiveData() {
   const scraped = await fetchGoldTradersData();
-  if (scraped) return { data: scraped, source: 'goldtraders' };
-
-  for (const url of ENDPOINTS) {
-    try {
-      const json = await fetchWithTimeout(url + (url.includes('?') ? '&' : '?') + 't=' + Date.now(), CFG.REQUEST_TIMEOUT);
-      const parsed = parsePayload(json);
-      if (parsed) return { data: parsed, source: 'fallback' };
-    } catch (err) {
-      console.warn('[GoldSignal] fallback endpoint failed:', url, err && err.message);
-    }
-  }
-  return { data: mockPayload(), source: 'mock' };
+  if (scraped) return { data: scraped, source: 'goldtraders', transport: scraped.transport };
+  throw new Error('ดึงราคาจาก API ทางการของสมาคมค้าทองคำไม่ได้ในขณะนี้');
 }
 
 async function refreshYlgQuote() {
@@ -2180,6 +2188,8 @@ async function refreshYlgQuote() {
     const sell = toNumber(payload && payload.bar96 && payload.bar96.tout);
     if (buy == null || sell == null || buy <= 0 || sell <= 0) throw new Error('รูปแบบราคาทอง YLG ไม่ถูกต้อง');
     state.ylgQuote = { buy, sell, updated: payload.update_date || null };
+    const spot = toNumber(payload.spot && (payload.spot.tout ?? payload.spot.tin));
+    state.ylgSpot = spot > 0 ? { price: spot, updated: payload.update_date || null } : null;
     pushYlgHistory(sell);
     state.ylgError = null;
   } catch (err) {
@@ -2207,7 +2217,7 @@ function renderYlgQuote() {
   status.textContent = 'ราคาเสนอของ YLG · อัปเดต ' + (timestamp && !Number.isNaN(timestamp.getTime()) ? dateTimeLabel(timestamp.getTime()) : 'เวลาที่ API ระบุ');
   $('ylgBuy').textContent = fmt0(quote.buy);
   $('ylgSell').textContent = fmt0(quote.sell);
-  const hasRealAssociationPrice = state.data && ['goldtraders', 'fallback', 'api'].includes(state.source);
+  const hasRealAssociationPrice = state.data && state.source === 'goldtraders';
   $('ylgBuyDiff').textContent = hasRealAssociationPrice
     ? 'เทียบสมาคม ' + signed(quote.buy - state.data.barBuy, 0)
     : 'เทียบสมาคม —';
@@ -2223,7 +2233,9 @@ function loadHistory() {
     const raw = localStorage.getItem(CFG.HISTORY_KEY);
     const arr = raw ? JSON.parse(raw) : [];
     if (Array.isArray(arr)) {
-      state.history = arr.filter(h => h && !h.seed && Number.isFinite(h.price)).slice(-CFG.MAX_HISTORY);
+      // Previous entries have no provenance and may contain demo values.
+      state.history = arr.filter(h => h && h.source === 'goldtraders' && Number.isFinite(h.price)).slice(-CFG.MAX_HISTORY);
+      if (state.history.length !== arr.length) saveHistory();
     }
   } catch (e) {
     state.history = [];
@@ -2263,12 +2275,15 @@ function pushYlgHistory(price) {
   saveYlgHistory();
 }
 
-function startHistory(price) {
-  state.history = [{ t: Date.now(), price, seed: false }];
+function startHistory(price, quotes) {
+  state.history = [{ t: Date.now(), price, seed: false, source: state.source, ...(quotes || {}) }];
 }
 
-function pushHistory(price) {
-  state.history.push({ t: Date.now(), price, seed: false });
+function pushHistory(price, quotes) {
+  const last = state.history[state.history.length - 1];
+  const unchanged = last && last.source === state.source && ['barBuy', 'barSell', 'ornBuy', 'ornSell'].every(key => Math.abs((last[key] ?? (key === 'barSell' ? last.price : NaN)) - (quotes && quotes[key] != null ? quotes[key] : (key === 'barSell' ? price : NaN))) < 0.01);
+  if (unchanged) return false;
+  state.history.push({ t: Date.now(), price, seed: false, source: state.source, ...(quotes || {}) });
   if (state.history.length > CFG.MAX_HISTORY) state.history = state.history.slice(-CFG.MAX_HISTORY);
   return true;
 }
@@ -2287,15 +2302,9 @@ function isTradingDay(d) {
 }
 
 function loadDaily() {
-  try {
-    const raw = localStorage.getItem(CFG.DAILY_KEY);
-    const arr = raw ? JSON.parse(raw) : [];
-    if (Array.isArray(arr)) {
-      state.daily = arr.filter(x => x && x.date && Number.isFinite(x.close)).slice(-420);
-    }
-  } catch (e) {
-    state.daily = [];
-  }
+  // Rebuild this series from cached official OHLC only; older daily caches
+  // mixed announcement snapshots with synthetic bootstrap values.
+  state.daily = [];
 }
 
 function saveDaily() {
@@ -2305,82 +2314,27 @@ function saveDaily() {
 }
 
 /** อัปเดตราคาปิดของวันนี้ด้วยราคาล่าสุดจาก API */
-function upsertTodayClose(price) {
-  const key = dateKey();
-  const last = state.daily[state.daily.length - 1];
-  if (last && last.date === key && !last.synthetic) last.close = price;
-  else state.daily.push({ date: key, close: price });
-  saveDaily();
-}
-
 /**
  * สร้างชุดข้อมูลรายวันจากข้อมูล OHLC จริงของสมาคมค้าทองคำ
  * เพื่อให้โมเดลพยากรณ์ใช้ข้อมูลจริงทุกเครื่องได้ผลลัพธ์เหมือนกัน
  */
 function bootstrapDaily(price) {
-  console.log('[DEBUG] bootstrapDaily called with price:', price);
-  console.log('[DEBUG] state.officialOhlc length:', state.officialOhlc ? state.officialOhlc.length : 0);
-  
-  // ลองดึงข้อมูลรายวันจาก OHLC จริงของสมาคมก่อน
-  if (state.officialOhlc && state.officialOhlc.length >= 10) {
-    console.log('[DEBUG] แปลงข้อมูล OHLC เป็นรายวัน...');
-    const dailyFromOhlc = new Map();
-    
-    // แปลงข้อมูล OHLC เป็นข้อมูลรายวัน (ใช้ราคาปิดของแต่ละวัน)
-    state.officialOhlc.forEach(point => {
-      const date = new Date(point.t);
-      const dateKeyStr = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
-      
-      // เก็บเฉพาะราคาปิดล่าสุดของแต่ละวัน
-      if (!dailyFromOhlc.has(dateKeyStr) || point.t > dailyFromOhlc.get(dateKeyStr).t) {
-        dailyFromOhlc.set(dateKeyStr, { date: dateKeyStr, close: point.price, synthetic: false });
-      }
-    });
-    
-    // แปลง Map เป็น array และเรียงตามวันที่
-    const realDaily = Array.from(dailyFromOhlc.values()).sort((a, b) => a.date.localeCompare(b.date));
-    console.log('[DEBUG] ได้ข้อมูลรายวันจาก OHLC:', realDaily.length, 'วัน');
-    console.log('[DEBUG] ตัวอย่างข้อมูลรายวันล่าสุด:', realDaily.slice(-3));
-    
-    if (realDaily.length >= 10) {
-      state.daily = realDaily.slice(-420); // เก็บข้อมูลล่าสุด 420 วัน
-      saveDaily();
-      console.log('[DEBUG] อัปเดต state.daily จาก OHLC จริงสำเร็จ');
-      return;
+  if (!Array.isArray(state.officialOhlc) || !state.officialOhlc.length) return;
+  const dailyFromOhlc = new Map();
+  state.officialOhlc.forEach(point => {
+    const key = dateKey(new Date(point.t));
+    if (!dailyFromOhlc.has(key) || point.t > dailyFromOhlc.get(key).t) {
+      dailyFromOhlc.set(key, { date: key, close: point.price, t: point.t });
     }
+  });
+  const daily = Array.from(dailyFromOhlc.values())
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .map(({ date, close }) => ({ date, close }));
+  if (daily.length) {
+    state.daily = daily.slice(-420);
+    saveDaily();
   }
-  
-  // ถ้าไม่มีข้อมูล OHLC เพียงพอ ใช้ข้อมูลจริงที่มีอยู่
-  const real = state.daily.filter(d => !d.synthetic);
-  const synth = state.daily.filter(d => d.synthetic);
-
-  if (real.length >= 15) {
-    if (synth.length) { state.daily = real; saveDaily(); }
-    return;
-  }
-  if (synth.length >= 20) return; /* มีชุดจำลองอยู่แล้ว ใช้ชุดเดิมแบบ deterministic */
-
-  const out = [];
-  const today = new Date();
-  let v = price;
-  
-  // ใช้ seed จากราคาเริ่มต้นเพื่อให้แต่ละเครื่องได้ผลลัพธ์เหมือนกัน
-  const seed = Math.floor(price);
-  let rngCounter = 0;
-  
-  for (let i = CFG.BOOTSTRAP_DAYS; i >= 1; i--) {
-    const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() - i);
-    if (!isTradingDay(d)) continue;
-    
-    // ใช้ seeded random แทน Math.random() เพื่อความ deterministic
-    const drift = (seededRandom(seed + rngCounter++) - 0.51) * CFG.DAILY_VOL * 1.9;
-    v = v / (1 + drift);
-    out.push({ date: dateKey(d), close: Math.round(v), synthetic: true });
-  }
-  state.daily = out.concat(real);
-  saveDaily();
 }
-
 /* ---------------- Forecast engine ---------------- */
 
 /** ความชัน (log-return ต่อแท่ง) จาก linear regression */
@@ -2398,12 +2352,11 @@ function linSlopePct(values, n) {
   return (m * sxy - sx * sy) / denom;
 }
 
-/** ความน่าจะเป็นแบบ logistic */
-const probUp = z => 1 / (1 + Math.exp(-z * 1.7));
-
 function buildForecast() {
-  const series = state.daily.filter(d => Number.isFinite(d.close) && d.close > 0);
-  if (series.length < 10) return null;
+  if (state.source !== 'goldtraders') return null;
+  if (!state.officialOhlcUpdated || Date.now() - state.officialOhlcUpdated > 4 * 86400000) return null;
+  const series = state.daily.filter(d => !d.synthetic && Number.isFinite(d.close) && d.close > 0);
+  if (series.length < 20) return null;
 
   const closes = series.map(d => d.close);
   const last = closes[closes.length - 1];
@@ -2414,8 +2367,8 @@ function buildForecast() {
   const rets = [];
   for (let i = Math.max(1, closes.length - 30); i < closes.length; i++) rets.push(Math.log(closes[i] / closes[i - 1]));
   let sigma = stddev(rets);
-  if (!Number.isFinite(sigma) || sigma <= 0) sigma = CFG.DAILY_VOL;
-  sigma = clamp(sigma, 0.002, 0.03);
+  if (!Number.isFinite(sigma) || sigma <= 0) return null;
+  sigma = clamp(sigma, 0, 0.03);
 
   const trendDaily = clamp(slope, -0.005, 0.005);
   const momentumDaily = clamp(((50 - (rsi == null ? 50 : rsi)) / 50) * 0.0028, -0.0028, 0.0028);
@@ -2453,7 +2406,6 @@ function buildForecast() {
       high: price * (1 + CFG.CONFIDENCE_Z * cumSigma),
       changePct: mu * 100,
       cumChangePct: ((price - last) / last) * 100,
-      pUp: clamp(probUp(mu / sigma) * 100, 3, 97),
       up: mu >= 0
     });
   }
@@ -2461,23 +2413,18 @@ function buildForecast() {
   if (!days.length) return null;
 
   const totalRet = (price - last) / last;
-  const totalSigma = sigma * Math.sqrt(days.length);
-  const trendProb = clamp(probUp(totalRet / totalSigma) * 100, 4, 96);
-
   let bestUp = days[0], bestDown = days[0];
   days.forEach(d => {
-    if (d.pUp > bestUp.pUp) bestUp = d;
-    if (d.pUp < bestDown.pUp) bestDown = d;
+    if (d.changePct > bestUp.changePct) bestUp = d;
+    if (d.changePct < bestDown.changePct) bestDown = d;
   });
 
   return {
     last, sma20, rsi, sigma, slope, days, bestUp, bestDown,
     endPrice: price,
-    trendProb,
     totalRetPct: totalRet * 100,
     up: totalRet >= 0,
-    hasSynthetic: series.some(d => d.synthetic),
-    realDays: series.filter(d => !d.synthetic).length
+    realDays: series.length
   };
 }
 
@@ -2505,7 +2452,11 @@ function flashCard(el, up) {
 
 function renderPrices() {
   const d = state.data;
-  if (!d) return;
+  if (!d) {
+    ['barBuy', 'barSell', 'ornBuy', 'ornSell', 'spreadBar', 'spreadOrn'].forEach(id => { $(id).textContent = '—'; });
+    ['barBuyDelta', 'barSellDelta', 'ornBuyDelta', 'ornSellDelta'].forEach(id => { $(id).textContent = '—'; });
+    return;
+  }
 
   $('barBuy').textContent = fmt0(d.barBuy);
   $('barSell').textContent = fmt0(d.barSell);
@@ -2517,10 +2468,14 @@ function renderPrices() {
     return arr[arr.length - 1] - arr[arr.length - 2];
   };
   const hist = state.history.filter(h => !h.seed);
-  setDelta($('barBuyDelta'), diff(hist.map(h => h.price)));
-  setDelta($('barSellDelta'), diff(hist.map(h => h.price)));
-  setDelta($('ornBuyDelta'), diff(hist.map(h => h.price)));
-  setDelta($('ornSellDelta'), diff(hist.map(h => h.price)));
+  const quoteDiff = key => {
+    const values = hist.map(h => h[key]).filter(Number.isFinite);
+    return diff(values);
+  };
+  setDelta($('barBuyDelta'), quoteDiff('barBuy'));
+  setDelta($('barSellDelta'), quoteDiff('barSell'));
+  setDelta($('ornBuyDelta'), quoteDiff('ornBuy'));
+  setDelta($('ornSellDelta'), quoteDiff('ornSell'));
 
   const spreadBar = d.barSell - d.barBuy;
   const spreadOrn = d.ornSell - d.ornBuy;
@@ -2530,7 +2485,15 @@ function renderPrices() {
 
 function renderAnalysis() {
   const a = state.analysis;
-  if (!a) return;
+  if (!a) {
+    $('signalLabel').textContent = 'รอข้อมูลจริง';
+    $('signalReason').textContent = 'ยังไม่มีราคาประกาศล่าสุดจากสมาคมค้าทองคำ';
+    ['confidence', 'rsiValue', 'smaFast', 'smaSlow', 'supportVal', 'resistanceVal', 'volatility', 'targetBuy', 'targetSell', 'targetBuyDist', 'targetSellDist', 'expectedRoi', 'riskReward', 'stopLoss'].forEach(id => { if ($(id)) $(id).textContent = '—'; });
+    $('sentimentValue').textContent = '—';
+    $('sentimentLabel').textContent = 'รอข้อมูลจริง';
+    $('sentimentNote').textContent = 'จะแสดงการวิเคราะห์เมื่อเชื่อมต่อราคาประกาศจริง';
+    return;
+  }
   const tone = TONE[a.signal.tone];
 
   $('signalEmoji').textContent = a.signal.emoji;
@@ -2550,7 +2513,7 @@ function renderAnalysis() {
   $('smaSlow').textContent = fmt0(a.smaSlow);
   $('supportVal').textContent = fmt0(a.support);
   $('resistanceVal').textContent = fmt0(a.resistance);
-  $('volatility').textContent = '±' + fmt2(a.vol) + '% / รอบ';
+  $('volatility').textContent = '±' + fmt2(a.vol) + (analysisIsDaily() ? '% / วัน' : '% / รอบ');
 
   $('targetBuy').textContent = fmt0(a.targetBuy);
   $('targetSell').textContent = fmt0(a.targetSell);
@@ -2587,9 +2550,10 @@ function renderHistoryTable() {
 
 function updateSourceUI() {
   const isOfficial = state.source === 'goldtraders' || state.source === 'api';
-  const isFallback = state.source === 'fallback';
-  $('sourceDot').className = 'pulse-dot h-2.5 w-2.5 rounded-full ' + (isOfficial ? 'bg-emerald-400' : isFallback ? 'bg-sky-400' : 'bg-amber-400');
-  $('sourceLabel').textContent = isOfficial ? 'ข้อมูลจริง · สมาคมค้าทองคำ' : isFallback ? 'ข้อมูลสำรอง · Thai Gold API' : 'โหมดจำลอง (ทุก API ไม่ตอบสนอง)';
+  $('sourceDot').className = 'pulse-dot h-2.5 w-2.5 rounded-full ' + (isOfficial ? 'bg-emerald-400' : 'bg-amber-400');
+  $('sourceLabel').textContent = isOfficial
+    ? 'ราคาประกาศ · สมาคมค้าทองคำ' + (state.sourceTransport === 'allorigins' ? ' · ผ่าน AllOrigins' : ' · เชื่อมต่อตรง')
+    : 'เชื่อมต่อแหล่งราคาทางการไม่ได้';
   $('lastUpdated').textContent = 'อัปเดตล่าสุด ' + (state.lastUpdated ? dateTimeLabel(state.lastUpdated) : '—');
   const announcement = state.data && state.data.announcementTime;
   const sequence = state.data && state.data.announcementSeq;
@@ -2600,13 +2564,10 @@ function updateSourceUI() {
   const banner = $('statusBanner');
   if (isOfficial) {
     banner.className = 'mt-4 rounded-xl border border-emerald-500/25 bg-emerald-500/8 px-4 py-2.5 text-xs text-emerald-300';
-    banner.textContent = 'อ่านข้อมูลจากเว็บไซต์สมาคมค้าทองคำสำเร็จ — ระบบอัปเดตอัตโนมัติทุก ' + CFG.REFRESH_SEC + ' วินาที';
-  } else if (isFallback) {
-    banner.className = 'mt-4 rounded-xl border border-sky-500/25 bg-sky-500/8 px-4 py-2.5 text-xs text-sky-300';
-    banner.textContent = 'Proxy/เว็บไซต์สมาคมไม่พร้อมใช้งาน — กำลังใช้ Thai Gold API สำรองจริง';
+    banner.textContent = 'อ่านราคาประกาศจากสมาคมค้าทองคำสำเร็จ' + (state.sourceTransport === 'allorigins' ? ' ผ่าน AllOrigins' : ' โดยตรง') + ' · ตรวจข้อมูลใหม่ทุก ' + CFG.REFRESH_SEC + ' วินาที';
   } else {
     banner.className = 'mt-4 rounded-xl border border-amber-500/25 bg-amber-500/8 px-4 py-2.5 text-xs text-amber-300';
-    banner.textContent = 'API สมาคมและแหล่งสำรองไม่ตอบสนอง — ข้อมูลที่เห็นเป็นข้อมูลจำลอง ไม่ใช่ราคาตลาด';
+    banner.textContent = 'เชื่อมต่อ API สมาคมค้าทองคำไม่ได้' + (state.lastUpdated ? ' · แสดงราคาจริงครั้งล่าสุดเมื่อ ' + dateTimeLabel(state.lastUpdated) : ' · ยังไม่มีราคาจริงให้แสดง') + ' · ระบบงดคำนวณสัญญาณและแจ้งเตือนจากข้อมูลเก่า';
   }
   banner.classList.remove('hidden');
 }
@@ -2625,7 +2586,19 @@ function renderForecast() {
   const body = $('forecastBody');
 
   if (!f) {
-    body.innerHTML = '<tr><td colspan="5" class="px-3 py-6 text-center text-slate-600">ยังมีข้อมูลรายวันไม่เพียงพอ</td></tr>';
+    body.innerHTML = '<tr><td colspan="6" class="px-3 py-6 text-center text-slate-600">ต้องเชื่อมต่อราคาสมาคมฯ และมีประวัติจริงอย่างน้อย 20 วันทำการ จึงจะแสดงแบบจำลอง</td></tr>';
+    $('fcTrend').textContent = '—';
+    $('fcTrendProb').textContent = 'ยังไม่มีข้อมูลจริงเพียงพอ';
+    $('fcEndPrice').textContent = '—';
+    $('fcEndDate').textContent = '—';
+    $('fcEndChg').textContent = '—';
+    $('fcBestUp').textContent = '—';
+    $('fcBestUpVal').textContent = '—';
+    $('fcBestDown').textContent = '—';
+    $('fcBestDownVal').textContent = '—';
+    $('fcVerdict').textContent = 'แบบจำลองจะเริ่มแสดงเมื่อมีราคาประกาศจริงและข้อมูลย้อนหลังเพียงพอ';
+    $('fcNote').textContent = 'รอราคาประกาศจริงและประวัติอย่างน้อย 20 วันทำการ';
+    if (forecastChart) { forecastChart.data.labels = []; forecastChart.data.datasets[0].data = []; forecastChart.update(); }
     return;
   }
 
@@ -2635,7 +2608,7 @@ function renderForecast() {
   /* ---- สรุปภาพรวม ---- */
   $('fcTrend').textContent = f.up ? 'ขาขึ้น' : 'ขาลง';
   $('fcTrend').className = 'num mt-0.5 font-display text-xl font-semibold ' + (f.up ? 'text-emerald-400' : 'text-rose-400');
-  $('fcTrendProb').textContent = 'โอกาสเป็นจริง ' + fmt0(f.up ? f.trendProb : 100 - f.trendProb) + '% · ' + fdays.length + ' วันทําการ';
+  $('fcTrendProb').textContent = 'แบบจำลองจากประวัติ ' + f.realDays + ' วันทำการ';
 
   $('fcEndDate').textContent = dateLabels(end.date).full;
   $('fcEndPrice').textContent = fmt0(end.price);
@@ -2643,10 +2616,10 @@ function renderForecast() {
   $('fcEndChg').textContent = signed(f.totalRetPct, 2) + '% จากราคาวันนี้';
 
   $('fcBestUp').textContent = dateLabels(f.bestUp.date).weekday + ' ' + dateLabels(f.bestUp.date).full;
-  $('fcBestUpVal').textContent = 'โอกาสขึ้น ' + fmt0(f.bestUp.pUp) + '% · ' + fmt0(f.bestUp.price) + ' บาท';
+  $('fcBestUpVal').textContent = 'ราคาแบบจำลอง ' + fmt0(f.bestUp.price) + ' บาท';
 
   $('fcBestDown').textContent = dateLabels(f.bestDown.date).weekday + ' ' + dateLabels(f.bestDown.date).full;
-  $('fcBestDownVal').textContent = 'โอกาสขึ้น ' + fmt0(f.bestDown.pUp) + '% · ' + fmt0(f.bestDown.price) + ' บาท';
+  $('fcBestDownVal').textContent = 'ราคาแบบจำลอง ' + fmt0(f.bestDown.price) + ' บาท';
 
   /* ---- ประโยคสรุปแบบอ่านง่าย ระบุวันที่ชัดเจน ---- */
   const shortDate = d => d.date.toLocaleDateString('th-TH', { weekday: 'short', day: 'numeric', month: 'short' });
@@ -2654,11 +2627,11 @@ function renderForecast() {
   const downList = fdays.filter(d => !d.up).map(shortDate);
   let verdict;
   if (!downList.length) {
-    verdict = 'คาดว่าราคาจะปรับขึ้นทุกวันทำการ — วันที่ ' + shortDate(f.bestUp) +
-      ' มีโอกาสขึ้นสูงสุด ' + fmt0(f.bestUp.pUp) + '% (ราคาเป้าหมาย ' + fmt0(f.bestUp.price) + ' บาท)';
+    verdict = 'แบบจำลองให้ทิศทางขึ้นตลอดช่วง — วันที่ ' + shortDate(f.bestUp) +
+      ' มีการเปลี่ยนแปลงคาดการณ์รายวันสูงสุด (ราคาแบบจำลอง ' + fmt0(f.bestUp.price) + ' บาท)';
   } else if (!upList.length) {
-    verdict = 'คาดว่าราคาจะปรับลงทุกวันทำการ — วันที่ ' + shortDate(f.bestDown) +
-      ' มีโอกาสลงสูงสุด ' + fmt0(100 - f.bestDown.pUp) + '% (ราคาเป้าหมาย ' + fmt0(f.bestDown.price) + ' บาท)';
+    verdict = 'แบบจำลองให้ทิศทางลงตลอดช่วง — วันที่ ' + shortDate(f.bestDown) +
+      ' มีการเปลี่ยนแปลงคาดการณ์รายวันต่ำสุด (ราคาแบบจำลอง ' + fmt0(f.bestDown.price) + ' บาท)';
   } else {
     verdict = 'วันที่มีโอกาส<b>ขึ้น</b>: ' + upList.join(' · ') +
       ' <span class="text-slate-500">|</span> วันที่มีโอกาส<b>ลง</b>: ' + downList.join(' · ');
@@ -2666,9 +2639,7 @@ function renderForecast() {
   $('fcVerdict').innerHTML = verdict;
 
   const note = $('fcNote');
-  note.textContent = f.hasSynthetic
-    ? 'อ้างอิงชุดข้อมูลรายวันจําลอง + ราคาจริง ' + f.realDays + ' วัน — จะเปลี่ยนไปใช้ข้อมูลจริงทั้งหมดเมื่อสะสมครบ ~15 วันทําการ'
-    : 'ใช้ข้อมูลราคาจริงสะสม ' + f.realDays + ' วันทําการ · ความผันผวนที่ใช้อ้างอิง ±' + fmt2(f.sigma * 100) + '% ต่อวัน';
+  note.textContent = 'คำนวณจากราคาประกาศจริง ' + f.realDays + ' วันทำการ · ความผันผวนย้อนหลัง ±' + fmt2(f.sigma * 100) + '% ต่อวัน';
 
   /* ---- ตารางรายวัน ---- */
   body.innerHTML = fdays.map((d, i) => {
@@ -2692,9 +2663,9 @@ function renderForecast() {
       '<td class="px-3 py-2.5">' +
         '<div class="flex items-center gap-2">' +
           '<div class="h-1.5 w-14 overflow-hidden rounded-full bg-white/10">' +
-            '<div class="h-full rounded-full ' + (d.up ? 'bg-emerald-400' : 'bg-rose-400') + '" style="width:' + clamp(d.pUp, 0, 100).toFixed(0) + '%"></div>' +
+            '<div class="h-full rounded-full ' + (d.up ? 'bg-emerald-400' : 'bg-rose-400') + '" style="width:' + clamp(Math.abs(d.cumChangePct) * 20, 3, 100).toFixed(0) + '%"></div>' +
           '</div>' +
-          '<span class="num text-[11px] ' + cls + '">' + fmt0(d.pUp) + '%</span>' +
+          '<span class="num text-[11px] ' + cls + '">' + signed(d.cumChangePct, 2) + '%</span>' +
         '</div>' +
       '</td>' +
     '</tr>';
@@ -3102,6 +3073,311 @@ function saveTrades() {
   } catch (e) { /* ข้ามได้ */ }
 }
 
+/* ---------------- Gold Chat Local Storage ---------------- */
+
+function loadGoldChat() {
+  try {
+    const raw = localStorage.getItem(CFG.GOLDCHAT_KEY);
+    const arr = raw ? JSON.parse(raw) : [];
+    state.goldChatTurns = Array.isArray(arr)
+      ? arr.filter(t => t && t.role && t.text)
+      : [];
+  } catch (e) { 
+    console.warn('[GoldSignal] Failed to load chat history:', e);
+    state.goldChatTurns = []; 
+  }
+}
+
+function saveGoldChat() {
+  try {
+    localStorage.setItem(CFG.GOLDCHAT_KEY, JSON.stringify(state.goldChatTurns));
+  } catch (e) { 
+    console.warn('[GoldSignal] Failed to save chat history:', e);
+  }
+}
+
+function clearGoldChat() {
+  state.goldChatTurns = [];
+  saveGoldChat();
+  const host = $('goldChatMessages');
+  if (host) {
+    host.innerHTML = '';
+    host.appendChild(createChatBubble('สวัสดีครับ ผมช่วยอ่านราคาสมาคม, RSI, คะแนน RSI/ความผันผวน และแนวรับ/แนวต้านบนหน้านี้ได้ คำตอบเป็นข้อมูลประกอบ ไม่ใช่คำแนะนำลงทุนเฉพาะบุคคล', 'model'));
+  }
+}
+
+function createChatBubble(text, role) {
+  const bubble = document.createElement('div');
+  bubble.className = 'chat-bubble max-w-[92%] rounded-2xl rounded-tl-md border border-white/5 bg-white/5 px-3 py-2.5 text-xs leading-relaxed text-slate-300';
+  if (role === 'user') {
+    bubble.classList.add('ml-auto', 'bg-gold/10', 'border-gold/20', 'text-slate-200');
+  }
+  bubble.textContent = text;
+  return bubble;
+}
+
+function renderGoldChatHistory() {
+  const host = $('goldChatMessages');
+  if (!host) return;
+  
+  host.innerHTML = '';
+  
+  if (state.goldChatTurns.length === 0) {
+    host.appendChild(createChatBubble('สวัสดีครับ ผมช่วยอ่านราคาสมาคม, RSI, คะแนน RSI/ความผันผวน และแนวรับ/แนวต้านบนหน้านี้ได้ คำตอบเป็นข้อมูลประกอบ ไม่ใช่คำแนะนำลงทุนเฉพาะบุคคล', 'model'));
+    return;
+  }
+  
+  state.goldChatTurns.forEach(turn => {
+    host.appendChild(createChatBubble(turn.text, turn.role));
+  });
+  
+  host.scrollTop = host.scrollHeight;
+}
+
+/* ---------------- Real-time Data Validation System ---------------- */
+
+function loadDataCheck() {
+  try {
+    const raw = localStorage.getItem(CFG.DATA_CHECK_KEY);
+    const data = raw ? JSON.parse(raw) : null;
+    if (data && typeof data === 'object') {
+      state.dataCheck.lastCheck = data.lastCheck || null;
+      state.dataCheck.lastComparison = data.lastComparison || null;
+      state.dataCheck.comparisonHistory = Array.isArray(data.comparisonHistory) ? data.comparisonHistory : [];
+    }
+  } catch (e) {
+    console.warn('[DATA CHECK] ไม่สามารถโหลดประวัติการตรวจสอบ:', e);
+    state.dataCheck.lastCheck = null;
+    state.dataCheck.lastComparison = null;
+    state.dataCheck.comparisonHistory = [];
+  }
+}
+
+async function fetchOfficialDataDirect() {
+  try {
+    console.log('[DATA CHECK] กำลังดึงข้อมูลจริงจากสมาคมค้าทองคำ...');
+    const data = await fetchWithTimeout(GOLDTRADERS_LATEST + '&t=' + Date.now(), CFG.REQUEST_TIMEOUT);
+    console.log('[DATA CHECK] ได้ข้อมูลจริง:', data);
+    return data;
+  } catch (err) {
+    console.error('[DATA CHECK] ดึงข้อมูลจริงไม่สำเร็จ:', err);
+    return null;
+  }
+}
+
+function compareWithOfficial(officialData, ourData) {
+  if (!officialData || !ourData) return null;
+  const official = parseGoldTradersApi(officialData) || officialData;
+  
+  const comparison = {
+    timestamp: Date.now(),
+    official: {
+      barBuy: official.barBuy ?? official.bL_BuyPrice,
+      barSell: official.barSell ?? official.bL_SellPrice,
+      ornBuy: official.ornBuy ?? official.oM965_BuyPrice,
+      ornSell: official.ornSell ?? official.oM965_SellPrice,
+      goldSpot: official.goldSpot,
+      usdthb: official.usdthb ?? official.bahtPerUSD,
+      announcementTime: official.announcementTime ?? official.asTime
+    },
+    our: {
+      barBuy: ourData.barBuy,
+      barSell: ourData.barSell,
+      ornBuy: ourData.ornBuy,
+      ornSell: ourData.ornSell,
+      goldSpot: ourData.goldSpot,
+      usdthb: ourData.usdthb
+    },
+    accuracy: {}
+  };
+  
+  // คำนวณความถูกต้อง (percentage difference)
+  const calcAccuracy = (official, our) => {
+    if (official == null || our == null || official === 0) return null;
+    const diff = Math.abs(official - our);
+    const pct = (diff / official) * 100;
+    return {
+      diff,
+      pct,
+      match: pct < 0.1 // ถ้าต่างน้อยกว่า 0.1% ถือว่าตรง
+    };
+  };
+  
+  comparison.accuracy.barBuy = calcAccuracy(comparison.official.barBuy, comparison.our.barBuy);
+  comparison.accuracy.barSell = calcAccuracy(comparison.official.barSell, comparison.our.barSell);
+  comparison.accuracy.ornBuy = calcAccuracy(comparison.official.ornBuy, comparison.our.ornBuy);
+  comparison.accuracy.ornSell = calcAccuracy(comparison.official.ornSell, comparison.our.ornSell);
+  comparison.accuracy.goldSpot = calcAccuracy(comparison.official.goldSpot, comparison.our.goldSpot);
+  comparison.accuracy.usdthb = calcAccuracy(comparison.official.usdthb, comparison.our.usdthb);
+  
+  // คำนวณความถูกต้องโดยรวม
+  const accuracies = Object.values(comparison.accuracy).filter(a => a != null);
+  const overallAccuracy = accuracies.length > 0 
+    ? accuracies.reduce((sum, a) => sum + (100 - a.pct), 0) / accuracies.length 
+    : null;
+  
+  comparison.overallAccuracy = overallAccuracy;
+  
+  return comparison;
+}
+
+function renderDataCheckPanel() {
+  const check = state.dataCheck.lastComparison;
+  if (!check) return;
+  
+  let panel = document.getElementById('dataCheckPanel');
+  if (!panel) {
+    // สร้าง panel ใหม่ถ้ายังไม่มี
+    panel = document.createElement('div');
+    panel.id = 'dataCheckPanel';
+    panel.className = 'card mt-5 overflow-hidden';
+    panel.innerHTML = `
+      <div class="flex flex-wrap items-center justify-between gap-3 border-b border-white/5 px-5 py-4">
+        <div class="flex items-center gap-3">
+          <span class="grid h-10 w-10 place-items-center rounded-xl bg-sky-500/15 text-lg text-sky-300">🔍</span>
+          <div>
+            <h2 class="font-display text-base font-semibold text-white">ตรวจสอบความถูกต้องข้อมูลแบบเรียลไทม์</h2>
+            <p class="text-[11px] text-slate-500">เปรียบเทียบกับข้อมูลจริงจากสมาคมค้าทองคำ</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <span id="checkStatus" class="rounded-lg px-3 py-1.5 text-[11px] font-medium">กำลังตรวจสอบ...</span>
+          <span id="checkTime" class="text-[10px] text-slate-500">—</span>
+        </div>
+      </div>
+      <div id="checkResults" class="px-5 py-4"></div>
+    `;
+    
+    // แทรก panel ก่อนส่วน Global Market
+    const globalMarketSection = document.querySelector('section.card.mt-5');
+    if (globalMarketSection) {
+      globalMarketSection.parentNode.insertBefore(panel, globalMarketSection);
+    }
+  }
+  
+  const status = document.getElementById('checkStatus');
+  const time = document.getElementById('checkTime');
+  const results = document.getElementById('checkResults');
+  
+  if (check.overallAccuracy !== null) {
+    const accuracy = check.overallAccuracy;
+    const isHighAccuracy = accuracy >= 99;
+    
+    status.className = `rounded-lg px-3 py-1.5 text-[11px] font-medium ${
+      isHighAccuracy ? 'bg-emerald-500/15 text-emerald-300' : 
+      accuracy >= 95 ? 'bg-amber-500/15 text-amber-300' : 
+      'bg-rose-500/15 text-rose-300'
+    }`;
+    status.textContent = `ความถูกต้อง: ${accuracy.toFixed(2)}%`;
+    
+    time.textContent = 'ตรวจสอบเมื่อ ' + dateTimeLabel(check.timestamp);
+    
+    results.innerHTML = `
+      <div class="grid grid-cols-2 gap-3 lg:grid-cols-3">
+        ${renderCheckItem('ทองแท่ง รับซื้อ', check.accuracy.barBuy, check.official.barBuy, check.our.barBuy)}
+        ${renderCheckItem('ทองแท่ง ขายออก', check.accuracy.barSell, check.official.barSell, check.our.barSell)}
+        ${renderCheckItem('ทองรูปพรรณ รับซื้อ', check.accuracy.ornBuy, check.official.ornBuy, check.our.ornBuy)}
+        ${renderCheckItem('ทองรูปพรรณ ขายออก', check.accuracy.ornSell, check.official.ornSell, check.our.ornSell)}
+        ${renderCheckItem('Gold Spot', check.accuracy.goldSpot, check.official.goldSpot, check.our.goldSpot, true)}
+        ${renderCheckItem('USD/THB', check.accuracy.usdthb, check.official.usdthb, check.our.usdthb, true)}
+      </div>
+      <div class="mt-4 rounded-xl border border-white/5 bg-white/5 px-4 py-3">
+        <div class="text-[11px] text-slate-400">ข้อมูลอ้างอิงสมาคม: ${check.official.announcementTime || '—'}</div>
+        <div class="text-[10px] text-slate-500 mt-1">แหล่งข้อมูล: ${state.source === 'goldtraders' ? 'สมาคมค้าทองคำ (ทางการ)' : 'ยังเชื่อมต่อแหล่งประกาศทางการไม่ได้'}</div>
+      </div>
+    `;
+  } else {
+    status.className = 'rounded-lg px-3 py-1.5 text-[11px] font-medium bg-rose-500/15 text-rose-300';
+    status.textContent = 'ไม่สามารถตรวจสอบได้';
+    results.innerHTML = '<div class="text-xs text-slate-400">ไม่สามารถดึงข้อมูลจริงเพื่อเปรียบเทียบ</div>';
+  }
+}
+
+function renderCheckItem(label, accuracy, official, our, isDecimal = false) {
+  if (!accuracy) {
+    return `
+      <div class="rounded-xl border border-white/5 bg-white/5 px-4 py-3">
+        <div class="text-[10px] uppercase tracking-wide text-slate-400">${label}</div>
+        <div class="text-slate-500 text-xs mt-1">ไม่มีข้อมูล</div>
+      </div>
+    `;
+  }
+  
+  const isMatch = accuracy.match;
+  const colorClass = isMatch ? 'text-emerald-400' : accuracy.pct < 1 ? 'text-amber-300' : 'text-rose-400';
+  const statusText = isMatch ? '✓ ตรง' : accuracy.pct < 1 ? '≈ ใกล้เคียง' : '✗ ต่างกัน';
+  
+  return `
+    <div class="rounded-xl border border-white/5 bg-white/5 px-4 py-3">
+      <div class="text-[10px] uppercase tracking-wide text-slate-400">${label}</div>
+      <div class="flex items-center justify-between mt-1">
+        <div>
+          <div class="text-xs text-slate-400">เรา: ${isDecimal ? fmt2(our) : fmt0(our)}</div>
+          <div class="text-xs text-slate-400">จริง: ${isDecimal ? fmt2(official) : fmt0(official)}</div>
+        </div>
+        <div class="text-right">
+          <div class="text-xs ${colorClass}">${statusText}</div>
+          <div class="text-[10px] text-slate-500">ต่าง ${accuracy.pct.toFixed(3)}%</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+async function runDataCheck() {
+  console.log('[DATA CHECK] ===== เริ่มตรวจสอบข้อมูล =====');
+  
+  const officialData = await fetchOfficialDataDirect();
+  if (!officialData) {
+    console.log('[DATA CHECK] ไม่สามารถดึงข้อมูลจริง');
+    state.dataCheck.lastCheck = Date.now();
+    state.dataCheck.lastComparison = null;
+    renderDataCheckPanel();
+    return;
+  }
+  
+  const comparison = compareWithOfficial(officialData, state.data);
+  state.dataCheck.lastCheck = Date.now();
+  state.dataCheck.lastComparison = comparison;
+  
+  // บันทึกประวัติการตรวจสอบ
+  state.dataCheck.comparisonHistory.push(comparison);
+  if (state.dataCheck.comparisonHistory.length > 50) {
+    state.dataCheck.comparisonHistory.shift();
+  }
+  
+  console.log('[DATA CHECK] ผลการเปรียบเทียบ:', comparison);
+  renderDataCheckPanel();
+  
+  // บันทึกลง localStorage
+  try {
+    localStorage.setItem(CFG.DATA_CHECK_KEY, JSON.stringify({
+      lastCheck: state.dataCheck.lastCheck,
+      lastComparison: state.dataCheck.lastComparison,
+      comparisonHistory: state.dataCheck.comparisonHistory.slice(-20)
+    }));
+  } catch (e) {
+    console.warn('[DATA CHECK] ไม่สามารถบันทึกประวัติการตรวจสอบ:', e);
+  }
+}
+
+function loadDataCheck() {
+  try {
+    const raw = localStorage.getItem(CFG.DATA_CHECK_KEY);
+    const data = raw ? JSON.parse(raw) : null;
+    if (data && typeof data === 'object') {
+      state.dataCheck.lastCheck = data.lastCheck || null;
+      state.dataCheck.lastComparison = data.lastComparison || null;
+      state.dataCheck.comparisonHistory = Array.isArray(data.comparisonHistory) ? data.comparisonHistory : [];
+    }
+  } catch (e) {
+    console.warn('[DATA CHECK] ไม่สามารถโหลดประวัติการตรวจสอบ:', e);
+    state.dataCheck.lastCheck = null;
+    state.dataCheck.lastComparison = null;
+    state.dataCheck.comparisonHistory = [];
+  }
+}
+
 /** เรียงตามวันและเวลาที่บันทึก เพื่อคำนวณต้นทุนถัวเฉลี่ยได้ถูกต้อง */
 function sortedTrades() {
   return state.trades.slice().sort((a, b) => {
@@ -3321,11 +3597,32 @@ function ymd(date) {
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 }
 
+/** แหล่งราคาทองโลกหลายเจ้า — ลองทีละแหล่งจนกว่าจะได้ค่าที่สมเหตุสมผล */
+function goldSpotSources() {
+  return [
+    { name: 'Gold-API', url: CFG.XAU_API, pick: j => j && (j.price ?? j.rate), time: j => j && j.updatedAt },
+    { name: 'Currency-API (XAU)', url: CFG.XAU_CDN, pick: j => j && j.xau && j.xau.usd, time: () => null }
+  ];
+}
+
 async function fetchGoldSpot() {
-  const j = await fetchWithTimeout(CFG.XAU_API, 9000);
-  const price = toNumber(j && (j.price ?? j.rate));
-  if (!price) throw new Error('รูปแบบข้อมูลทองโลกไม่ถูกต้อง');
-  return { price, updated: j.updatedAt || null };
+  const fails = [];
+  for (const src of goldSpotSources()) {
+    try {
+      const j = await fetchWithTimeout(src.url, 9000);
+      const price = toNumber(src.pick(j));
+      if (!price || price < 500 || price > 20000) throw new Error('ค่าราคาโลกผิดปกติ');
+      return { price, updated: src.time(j) || null, source: src.name };
+    } catch (err) {
+      fails.push(src.name + ': ' + (err && err.message ? err.message : 'ล้มเหลว'));
+      console.warn('[GoldSignal] gold spot source failed:', src.name, err && err.message);
+    }
+  }
+  /* แหล่งสุดท้าย: ราคา Spot ที่ YLG ประกาศคู่กับราคาสมาคม (ดึงอยู่แล้วในหน้านี้) */
+  if (state.ylgSpot && Number.isFinite(state.ylgSpot.price)) {
+    return { price: state.ylgSpot.price, updated: state.ylgSpot.updated, source: 'YLG Spot' };
+  }
+  throw new Error(fails.length ? fails.join(' · ') : 'ไม่สามารถดึงราคาทองโลกได้');
 }
 
 async function fetchUsdThbOn(dateStr) {
@@ -3426,6 +3723,37 @@ function xauChange24h() {
   return ((state.macro.xau - best.xau) / best.xau) * 100;
 }
 
+/** อัตรา USD/THB ที่ใกล้เคียงวันที่กำหนด (ไม่เกิน 4 วัน) — ใช้เทียบกับราคาปิดวันเดียวกัน */
+function fxRateNear(dateStr) {
+  const s = state.macro.fxSeries;
+  if (!s || !s.length) return null;
+  const target = Date.parse(dateStr + 'T00:00:00');
+  if (!Number.isFinite(target)) return null;
+  let best = null;
+  s.forEach(p => {
+    const diff = Math.abs(p.t - target);
+    if (!best || diff < best.diff) best = { diff, rate: p.rate };
+  });
+  if (!best || best.diff > 4 * 86400000) return null;
+  return best.rate;
+}
+
+/** ราคาปิดรายวันของสมาคมฯ ที่ยังต่างจากราคาปัจจุบัน — ใช้ประมาณการแยกปัจจัยก่อนมี snapshot 24 ชม. */
+function dailyAttributionEstimate() {
+  const d = state.data;
+  if (!d || !Number.isFinite(d.barSell)) return null;
+  const series = state.daily.filter(x => x && x.date && Number.isFinite(x.close) && x.close > 0);
+  if (series.length < 2) return null;
+  const last = series[series.length - 1];
+  let prev = null;
+  for (let i = series.length - 2; i >= 0 && i >= series.length - 8; i--) {
+    if (Math.abs(series[i].close - d.barSell) > 0.5) { prev = series[i]; break; }
+  }
+  if (!prev || prev.close <= 0) return null;
+  const days = Math.max(1, Math.round((Date.parse(last.date) - Date.parse(prev.date)) / 86400000));
+  return { now: d.barSell, prevClose: prev.close, prevDate: prev.date, days };
+}
+
 function renderAttribution() {
   const m = state.macro;
   const target = Date.now() - 86400000;
@@ -3447,22 +3775,49 @@ function renderAttribution() {
     $('attributionFxPct').textContent = signed((fxImpact / oldFair) * 100, 2) + '% ของ Fair Price';
     $('attributionTotal').textContent = 'รวม Fair Price เปลี่ยนประมาณ ' + signed(total, 0) + ' บาทใน ' + fmt2(baseline.diff / 3600000) + ' ชม. · เป็นการแยกผลจาก Spot/FX ไม่รวมการเปลี่ยนพรีเมียมและรอบประกาศราคาสมาคมฯ';
   } else {
-    $('attributionSpot').textContent = '—';
-    $('attributionFx').textContent = '—';
-    $('attributionSpotPct').textContent = 'ยังไม่มีข้อมูลครบ 24 ชม.';
-    $('attributionFxPct').textContent = 'ยังไม่มีข้อมูลครบ 24 ชม.';
-    $('attributionTotal').textContent = 'การแยกผลจะแสดงเมื่อมี snapshot Gold Spot และ USD/THB ใกล้เคียง 24 ชั่วโมง (ระบบเก็บทุก 30 นาที)';
+    /* ไม่มี snapshot ครบ 24 ชม. ในเครื่อง: ประมาณการจากราคาปิดรายวันของสมาคมฯ + ค่าเงินย้อนหลัง
+       ใช้เอกลักษณ์ %ราคาไทย ≈ %ทองโลก + %ค่าเงิน แล้วแยกส่วนออกจากกัน */
+    const est = dailyAttributionEstimate();
+    const fxRef = est ? fxRateNear(est.prevDate) : null;
+    const rFx = fxRef != null && m.usdthb != null ? ((m.usdthb - fxRef) / fxRef) * 100
+      : (m.chg1 != null ? m.chg1 : null);
+    if (est && rFx != null && m.usdthb != null) {
+      const rThai = ((est.now - est.prevClose) / est.prevClose) * 100;
+      const fxImpact = est.now * (rFx / 100);
+      const spotImpact = est.now * ((rThai - rFx) / 100);
+      const total = fxImpact + spotImpact;
+      $('attributionSpot').textContent = signed(spotImpact, 0) + ' บาท';
+      $('attributionSpotPct').textContent = signed(rThai - rFx, 2) + '% ของราคาไทย (ประมาณการ)';
+      $('attributionFx').textContent = signed(fxImpact, 0) + ' บาท';
+      $('attributionFxPct').textContent = signed(rFx, 2) + '% ของUSD/THB (ประมาณการ)';
+      $('attributionTotal').textContent = 'ประมาณการจากราคาปิด ' + est.prevDate + ' (' + est.days + ' วันก่อน) → ล่าสุด: ราคาทองไทยเปลี่ยน ' +
+        signed(rThai, 2) + '% (' + signed(est.now - est.prevClose, 0) + ' บาท) แยกเป็นแรงจากทองโลก ' +
+        signed(spotImpact, 0) + ' บาท และค่าเงิน ' + signed(fxImpact, 0) + ' บาท · รวม ' + signed(total, 0) +
+        ' บาท — ยังไม่หักการเปลี่ยนพรีเมียมของสมาคมฯ (จะแม่นขึ้นเมื่อระบบเก็บ snapshot ครบ 24 ชม.)';
+    } else {
+      $('attributionSpot').textContent = '—';
+      $('attributionFx').textContent = '—';
+      $('attributionSpotPct').textContent = 'ยังไม่มีข้อมูลเปรียบเทียบพอ';
+      $('attributionFxPct').textContent = 'ยังไม่มีข้อมูลเปรียบเทียบพอ';
+      $('attributionTotal').textContent = 'การแยกผลจะแสดงเมื่อมีข้อมูล Gold Spot, USD/THB และราคาสมาคมฯ (ระบบเก็บ snapshot ทุก 30 นาที และใช้ราคาปิดรายวันเป็นตัวช่วย)';
+    }
   }
 
+  /* เทียบความรุนแรงของค่าเงิน: ถ้ามีข้อมูล 1 วันใช้ค่านั้น ไม่งั้นเทียบจาก 7 วันแบบเทียบสเกลรายวัน */
   const fxMove = m.chg1 != null ? m.chg1 : m.chg7;
+  const fxNorm = m.chg1 != null ? Math.abs(m.chg1) : (m.chg7 != null ? Math.abs(m.chg7) / 3 : 0);
+  const fxTxt = [];
+  if (m.chg1 != null) fxTxt.push('1 วัน ' + signed(m.chg1, 2) + '%');
+  if (m.chg7 != null) fxTxt.push('7 วัน ' + signed(m.chg7, 2) + '%');
+  const fxDetail = fxTxt.length ? ' (USD/THB ' + fxTxt.join(' · ') + ')' : '';
   let warning = 'ความเสี่ยงค่าเงิน: ยังไม่มีข้อมูลย้อนหลังพอสำหรับประเมิน';
-  if (fxMove != null && Math.abs(fxMove) >= 0.5) {
-    warning = 'ความเสี่ยงค่าเงินสูง: USD/THB เปลี่ยน ' + signed(fxMove, 2) + '% — ' +
+  if (fxMove != null && fxNorm >= 0.5) {
+    warning = 'ความเสี่ยงค่าเงินสูง' + fxDetail + ': ' +
       (fxMove > 0 ? 'เงินบาทอ่อนกดดันให้ต้นทุนทองไทยสูงขึ้น แม้ Spot ไม่เปลี่ยน' : 'เงินบาทแข็งอาจกดราคาไทย แม้ Spot ไม่เปลี่ยน');
-  } else if (fxMove != null && Math.abs(fxMove) >= 0.2) {
-    warning = 'เฝ้าระวังเงินบาท: USD/THB เปลี่ยน ' + signed(fxMove, 2) + '%; ผลค่าเงินอาจกลบหรือเสริมทิศทาง Gold Spot';
+  } else if (fxMove != null && fxNorm >= 0.2) {
+    warning = 'เฝ้าระวังเงินบาท' + fxDetail + ': ผลค่าเงินอาจกลบหรือเสริมทิศทาง Gold Spot';
   } else if (fxMove != null) {
-    warning = 'ความเสี่ยงค่าเงินปัจจุบันค่อนข้างต่ำ: USD/THB เปลี่ยน ' + signed(fxMove, 2) + '% ตามข้อมูลย้อนหลังที่มี';
+    warning = 'ความเสี่ยงค่าเงินปัจจุบันค่อนข้างต่ำ' + fxDetail + ': ราคาทองไทยจึงเคลื่อนไหวตาม Gold Spot เป็นหลัก';
   }
   $('fxRiskWarning').textContent = warning;
 }
@@ -3481,12 +3836,14 @@ async function refreshMacro() {
 
     m.error = null;
     m.xau = officialSpot ?? (spot.status === 'fulfilled' && spot.value ? spot.value.price : null);
-    m.xauUpdated = officialSpot != null && state.data.announcementTime
-      ? state.data.announcementTime
+    m.xauSource = officialSpot != null ? 'ราคาที่สมาคมฯ ประกาศ'
+      : (spot.status === 'fulfilled' && spot.value ? spot.value.source : null);
+    m.xauUpdated = officialSpot != null
+      ? state.data.updatedAt
       : spot.status === 'fulfilled' && spot.value ? spot.value.updated : null;
     m.usdthb = officialFx ?? (fx.status === 'fulfilled' && fx.value ? fx.value.rate : null);
-    m.fxDate = officialFx != null
-      ? ymd(new Date())
+    m.fxDate = officialFx != null && state.data.updatedAt
+      ? ymd(new Date(state.data.updatedAt))
       : fx.status === 'fulfilled' && fx.value ? fx.value.date : null;
 
     if (m.xau == null && m.usdthb == null) {
@@ -3665,9 +4022,12 @@ function renderMacro() {
   }
   $('macroVerdictBody').innerHTML = body;
 
+  const spotSourceNote = m.xauSource ? ' · แหล่งทองโลก: ' + m.xauSource : '';
   $('macroStatus').textContent = m.error
     ? m.error
-    : (m.xauUpdated ? 'อัปเดตราคาโลก ' + dateTimeLabel(new Date(m.xauUpdated).getTime()) : 'ข้อมูลตลาดโลกอัปเดตล่าสุด ' + dateTimeLabel(Date.now()));
+    : m.xauUpdated
+      ? 'อัปเดตราคาโลก ' + dateTimeLabel(new Date(m.xauUpdated).getTime()) + spotSourceNote
+      : 'ข้อมูลตลาดโลกจาก ' + (m.xauSource || 'แหล่งสำรอง') + ' (ต้นทางไม่ระบุเวลา)';
   $('macroStatus').className = 'text-[11px] ' + (m.error ? 'text-rose-400' : 'text-slate-500');
 
   updateMacroChart();
@@ -3767,7 +4127,7 @@ function sendWebNotification(a, price) {
     const n = new Notification('🔔 ' + action + ' — ' + fmt0(price) + ' บาท', {
       body: describeAlert(a) +
         '\nเวลาที่ตรวจพบ: ' + dateTimeLabel(Date.now()) +
-        (state.source === 'mock' ? '\n(ข้อมูลจำลอง — API ไม่ตอบสนอง)' : ''),
+        (state.source === 'offline' ? '\n(ขณะนี้ดึงราคาประกาศจริงไม่ได้)' : ''),
       tag: a.id,
       lang: 'th'
     });
@@ -3808,7 +4168,7 @@ function playBeep(side) {
 
 function checkAlerts() {
   /* ต้องมีราคาจากการดึงข้อมูลจริงแล้วเท่านั้น */
-  if (!state.data || !state.lastUpdated) return;
+  if (!state.data || state.source !== 'goldtraders' || !state.lastUpdated) return;
   const now = Date.now();
   let fired = 0;
 
@@ -4077,24 +4437,26 @@ async function refresh(manual) {
   const prevPrice = state.history.length ? state.history[state.history.length - 1].price : null;
 
   try {
-    const { data, source } = await fetchLiveData();
+    const { data, source, transport } = await fetchLiveData();
     state.data = data;
     state.source = source;
+    state.sourceTransport = transport;
     state.lastUpdated = Date.now();
     refreshYlgQuote();
 
-    if (!state.history.length) startHistory(data.barSell);
-    else pushHistory(data.barSell);
+    if (!state.history.length) startHistory(data.barSell, data);
+    else pushHistory(data.barSell, data);
 
     saveHistory();
 
     /* อัปเดตราคาปิดรายวัน + เตรียมชุดข้อมูลให้โมเดลพยากรณ์ */
     bootstrapDaily(data.barSell);
-    upsertTodayClose(data.barSell);
-
-    state.analysis = analyze(state.history);
+    runAnalysis();
     renderAll();
     checkAlerts();
+    
+    /* รันตรวจสอบข้อมูลแบบเรียลไทม์หลังโหลดข้อมูลสำเร็จ */
+    runDataCheck();
     await refreshMacro();   /* ตลาดโลก — มี try/catch ภายใน ไม่กระทบราคาหลัก */
 
     if (prevPrice != null && Math.abs(prevPrice - data.barSell) > 0.5) {
@@ -4103,6 +4465,11 @@ async function refresh(manual) {
     if (manual) flashStat();
   } catch (err) {
     console.error('[GoldSignal] refresh error', err);
+    state.source = 'offline';
+    state.sourceTransport = null;
+    state.data = null;
+    state.analysis = null;
+    renderAll();
     const banner = $('statusBanner');
     banner.className = 'mt-4 rounded-xl border border-rose-500/25 bg-rose-500/8 px-4 py-2.5 text-xs text-rose-300';
     banner.textContent = 'เกิดข้อผิดพลาดในการดึงข้อมูล: ' + (err && err.message ? err.message : 'ไม่ทราบสาเหตุ');
@@ -4321,12 +4688,12 @@ function wireEvents() {
 
   $('clearHistoryBtn').addEventListener('click', () => {
     state.history = [];
-    if (state.data) startHistory(state.data.barSell);
+    if (state.data) startHistory(state.data.barSell, state.data);
     saveHistory();
     state.ylgHistory = [];
     if (state.ylgQuote) pushYlgHistory(state.ylgQuote.sell);
     else saveYlgHistory();
-    state.analysis = analyze(state.history);
+    runAnalysis();
     renderAll();
   });
 
@@ -4360,6 +4727,8 @@ function boot() {
   loadAlerts();
   loadMacroSnaps();
   loadTrades();
+  loadGoldChat(); // โหลดประวัติแชท
+  loadDataCheck(); // โหลดประวัติการตรวจสอบข้อมูล
   initChart();
   initMacroChart();
   initForecastChart();
@@ -4373,19 +4742,8 @@ function boot() {
   renderAlerts();
   renderBreakEven();
   renderJournal();
+  renderDataCheckPanel(); // แสดง panel ตรวจสอบข้อมูล
   console.log('[DEBUG] ===== BOOT PROCESS COMPLETED =====');
-
-  /* แสดงข้อมูลเบื้องต้นทันที ก่อนผลลัพธ์จากเครือข่าย */
-  if (state.history.length) {
-    state.data = {
-      barBuy: state.history[state.history.length - 1].price - 100,
-      barSell: state.history[state.history.length - 1].price,
-      ornBuy: state.history[state.history.length - 1].price * 0.98,
-      ornSell: state.history[state.history.length - 1].price * 1.03
-    };
-    state.analysis = analyze(state.history);
-    renderAll();
-  }
 
   refresh(true);
 }
