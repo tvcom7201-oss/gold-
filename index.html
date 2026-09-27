@@ -1127,6 +1127,17 @@ const ENDPOINTS = [
 /* ราคาตั้งต้นของโหมดจำลอง (บาท / 1 บาททองคำ) */
 const MOCK_BASE = { barBuy: 67650, barSell: 67850, ornBuy: 66295, ornSell: 68650 };
 
+/**
+ * Seeded random number generator สำหรับสร้างข้อมูลจำลองแบบ deterministic
+ * ใช้วิธี mulberry32 เพื่อให้ได้ค่าเดียวกันเสมอเมื่อใช้ seed เดียวกัน
+ */
+function seededRandom(seed) {
+  let t = seed += 0x6D2B79F5;
+  t = Math.imul(t ^ t >>> 15, t | 1);
+  t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+  return ((t ^ t >>> 14) >>> 0) / 4294967296;
+}
+
 const state = {
   data: null,        // { barBuy, barSell, ornBuy, ornSell }
   history: [],       // [{ t, price, seed }]  — ระดับนาที
@@ -1964,11 +1975,15 @@ function renderOfficialOhlcStatus() {
 
 async function refreshOfficialOhlc(force) {
   if (state.officialOhlcLoading || (!force && Date.now() - state.officialOhlcUpdated < CFG.OHLC_REFRESH_MS)) return;
+  console.log('[DEBUG] กำลังดึงข้อมูล OHLC จากสมาคม...');
   state.officialOhlcLoading = true;
   try {
     const url = JINA_PROXY + 'goldtraders.or.th/api/GoldPrices/ohlc?readjson=true';
+    console.log('[DEBUG] OHLC URL:', url);
     const text = await fetchTextWithTimeout(url, 20000);
+    console.log('[DEBUG] OHLC data length:', text.length);
     const points = parseOfficialOhlc(text);
+    console.log('[DEBUG] OHLC parsed points:', points.length);
     if (!points.length) throw new Error('ไม่พบแท่งราคา OHLC จากสมาคม');
     state.officialOhlc = points;
     state.officialOhlcUpdated = Date.now();
@@ -1979,6 +1994,14 @@ async function refreshOfficialOhlc(force) {
     }
     renderOfficialOhlcStatus();
     updateChart();
+    
+    // อัปเดตข้อมูลรายวันจาก OHLC จริงเพื่อให้พยากรณ์ใช้ข้อมูลจริง
+    if (state.officialOhlc && state.officialOhlc.length >= 10) {
+      const latestPrice = state.officialOhlc[state.officialOhlc.length - 1].price;
+      console.log('[DEBUG] อัปเดตข้อมูลรายวันจาก OHLC จริง, ราคาล่าสุด:', latestPrice);
+      bootstrapDaily(latestPrice);
+      renderForecast(); // อัปเดตพยากรณ์ด้วยข้อมูลจริงใหม่
+    }
   } catch (err) {
     console.warn('[GoldSignal] association OHLC history unavailable:', err && err.message);
     renderOfficialOhlcStatus();
@@ -2034,9 +2057,11 @@ function parsePayload(json) {
 }
 
 let mockDrift = 0;
+let mockRngCounter = 12345; // seed เริ่มต้นแบบ deterministic
 
 function mockPayload() {
-  mockDrift += (Math.random() - 0.5) * 60;
+  // ใช้ seeded random เพื่อความ deterministic เมื่อใช้โหมด mock
+  mockDrift += (seededRandom(mockRngCounter++) - 0.5) * 60;
   mockDrift = Math.max(-320, Math.min(320, mockDrift * 0.92));
   const t = Date.now() / 60000;
   const wave = Math.sin(t / 17) * 90 + Math.sin(t / 5.3) * 28;
@@ -2104,6 +2129,7 @@ function parseGoldTradersApi(payload) {
 }
 
 async function fetchGoldTradersData() {
+  console.log('[DEBUG] กำลังดึงข้อมูลจากสมาคมค้าทองคำ...');
   const targets = [
     { url: GOLDTRADERS_HOME, parse: parseGoldTradersHtml },
     { url: GOLDTRADERS_LATEST + '&t=' + Date.now(), parse: contents => {
@@ -2112,14 +2138,22 @@ async function fetchGoldTradersData() {
   ];
   for (const target of targets) {
     try {
+      console.log('[DEBUG] ลองดึงจาก:', target.url);
       const envelope = await fetchWithTimeout(ALL_ORIGINS + encodeURIComponent(target.url), CFG.PROXY_TIMEOUT);
-      if (typeof envelope.contents !== 'string') continue;
+      if (typeof envelope.contents !== 'string') {
+        console.log('[DEBUG] ข้อมูลไม่ใช่ string');
+        continue;
+      }
       const data = target.parse(envelope.contents);
-      if (data) return data;
+      if (data) {
+        console.log('[DEBUG] ดึงข้อมูลสมาคมสำเร็จ:', data);
+        return data;
+      }
     } catch (err) {
       console.warn('[GoldSignal] Gold Traders scrape failed:', target.url, err && err.message);
     }
   }
+  console.log('[DEBUG] ดึงข้อมูลสมาคมไม่สำเร็จ ใช้ API สำรอง');
   return null;
 }
 
@@ -2280,10 +2314,43 @@ function upsertTodayClose(price) {
 }
 
 /**
- * สร้างชุดข้อมูลรายวันจำลอง เพื่อให้โมเดลพยากรณ์ทำงานได้ตั้งแต่เปิดใช้ครั้งแรก
- * (จะถูกแทนที่ด้วยข้อมูลจริงเมื่อใช้งานต่อเนื่องครบ ~15 วันทําการ)
+ * สร้างชุดข้อมูลรายวันจากข้อมูล OHLC จริงของสมาคมค้าทองคำ
+ * เพื่อให้โมเดลพยากรณ์ใช้ข้อมูลจริงทุกเครื่องได้ผลลัพธ์เหมือนกัน
  */
 function bootstrapDaily(price) {
+  console.log('[DEBUG] bootstrapDaily called with price:', price);
+  console.log('[DEBUG] state.officialOhlc length:', state.officialOhlc ? state.officialOhlc.length : 0);
+  
+  // ลองดึงข้อมูลรายวันจาก OHLC จริงของสมาคมก่อน
+  if (state.officialOhlc && state.officialOhlc.length >= 10) {
+    console.log('[DEBUG] แปลงข้อมูล OHLC เป็นรายวัน...');
+    const dailyFromOhlc = new Map();
+    
+    // แปลงข้อมูล OHLC เป็นข้อมูลรายวัน (ใช้ราคาปิดของแต่ละวัน)
+    state.officialOhlc.forEach(point => {
+      const date = new Date(point.t);
+      const dateKeyStr = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
+      
+      // เก็บเฉพาะราคาปิดล่าสุดของแต่ละวัน
+      if (!dailyFromOhlc.has(dateKeyStr) || point.t > dailyFromOhlc.get(dateKeyStr).t) {
+        dailyFromOhlc.set(dateKeyStr, { date: dateKeyStr, close: point.price, synthetic: false });
+      }
+    });
+    
+    // แปลง Map เป็น array และเรียงตามวันที่
+    const realDaily = Array.from(dailyFromOhlc.values()).sort((a, b) => a.date.localeCompare(b.date));
+    console.log('[DEBUG] ได้ข้อมูลรายวันจาก OHLC:', realDaily.length, 'วัน');
+    console.log('[DEBUG] ตัวอย่างข้อมูลรายวันล่าสุด:', realDaily.slice(-3));
+    
+    if (realDaily.length >= 10) {
+      state.daily = realDaily.slice(-420); // เก็บข้อมูลล่าสุด 420 วัน
+      saveDaily();
+      console.log('[DEBUG] อัปเดต state.daily จาก OHLC จริงสำเร็จ');
+      return;
+    }
+  }
+  
+  // ถ้าไม่มีข้อมูล OHLC เพียงพอ ใช้ข้อมูลจริงที่มีอยู่
   const real = state.daily.filter(d => !d.synthetic);
   const synth = state.daily.filter(d => d.synthetic);
 
@@ -2296,10 +2363,17 @@ function bootstrapDaily(price) {
   const out = [];
   const today = new Date();
   let v = price;
+  
+  // ใช้ seed จากราคาเริ่มต้นเพื่อให้แต่ละเครื่องได้ผลลัพธ์เหมือนกัน
+  const seed = Math.floor(price);
+  let rngCounter = 0;
+  
   for (let i = CFG.BOOTSTRAP_DAYS; i >= 1; i--) {
     const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() - i);
     if (!isTradingDay(d)) continue;
-    const drift = (Math.random() - 0.51) * CFG.DAILY_VOL * 1.9;
+    
+    // ใช้ seeded random แทน Math.random() เพื่อความ deterministic
+    const drift = (seededRandom(seed + rngCounter++) - 0.51) * CFG.DAILY_VOL * 1.9;
     v = v / (1 + drift);
     out.push({ date: dateKey(d), close: Math.round(v), synthetic: true });
   }
@@ -4266,10 +4340,23 @@ function wireEvents() {
 /* ---------------- Boot ---------------- */
 
 function boot() {
+  console.log('[DEBUG] ===== BOOT PROCESS STARTED =====');
   loadHistory();
   loadOfficialOhlc();
+  console.log('[DEBUG] After loadOfficialOhlc, OHLC points:', state.officialOhlc.length);
   loadYlgHistory();
   loadDaily();
+  console.log('[DEBUG] After loadDaily, daily points:', state.daily.length);
+  
+  // ลองสร้างข้อมูลรายวันจาก OHLC จริงก่อน (ถ้ามี)
+  if (state.officialOhlc && state.officialOhlc.length >= 10) {
+    const latestPrice = state.officialOhlc[state.officialOhlc.length - 1].price;
+    console.log('[DEBUG] Calling bootstrapDaily from boot with price:', latestPrice);
+    bootstrapDaily(latestPrice);
+  }
+  
+  console.log('[DEBUG] After bootstrapDaily, daily points:', state.daily.length);
+  
   loadAlerts();
   loadMacroSnaps();
   loadTrades();
@@ -4286,6 +4373,7 @@ function boot() {
   renderAlerts();
   renderBreakEven();
   renderJournal();
+  console.log('[DEBUG] ===== BOOT PROCESS COMPLETED =====');
 
   /* แสดงข้อมูลเบื้องต้นทันที ก่อนผลลัพธ์จากเครือข่าย */
   if (state.history.length) {
