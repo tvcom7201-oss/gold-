@@ -64,6 +64,13 @@
   }
   @keyframes flashUp { 0%{ background-color: rgba(34,197,94,.28);} 100%{ background-color: transparent;} }
   @keyframes flashDown { 0%{ background-color: rgba(244,63,94,.28);} 100%{ background-color: transparent;} }
+    .chat-panel { height: min(620px, calc(100dvh - 6.5rem)); }
+    .chat-scroll { min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; scrollbar-width: thin; scrollbar-color: #334155 transparent; }
+    .chat-bubble { overflow-wrap: anywhere; user-select: text; -webkit-user-select: text; touch-action: pan-y; }
+    .chat-context-menu { position: fixed; z-index: 60; min-width: 9rem; }
+    @media (max-width: 639px) {
+      .chat-panel { height: min(72dvh, 620px); }
+    }
 </style>
 </head>
 <body class="min-h-screen font-sans text-slate-200 antialiased">
@@ -951,6 +958,105 @@
   </section>
 </div>
 
+<div id="goldAssistant" class="fixed bottom-4 right-4 z-40 flex flex-col items-end gap-3 sm:bottom-5 sm:right-5" data-open="false">
+  <section id="goldChatPanel" class="chat-panel card hidden w-[min(92vw,25rem)] flex-col overflow-hidden border border-gold/25 shadow-2xl shadow-black/60" aria-labelledby="goldChatTitle" aria-hidden="true">
+    <header class="flex items-center justify-between gap-3 border-b border-white/5 bg-ink-900/80 px-4 py-3">
+      <div class="flex min-w-0 items-center gap-3">
+        <img src="icon/cffe1b4e-295c-4447-ae79-80cbbc3f07e9.jpg" alt="" class="h-9 w-9 shrink-0 rounded-lg object-cover object-[center_32%] ring-1 ring-gold/30" />
+        <div class="min-w-0">
+          <h2 id="goldChatTitle" class="truncate font-display text-sm font-semibold text-white">Gold Smart AI Assistant</h2>
+          <div class="flex items-center gap-1.5 text-[10px] text-emerald-300"><span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>Online · พร้อมวิเคราะห์ 24 ชม.</div>
+        </div>
+      </div>
+      <div class="flex shrink-0 items-center gap-1">
+      <button id="goldChatSettingsToggle" type="button" aria-label="ตั้งค่า Gemini" aria-expanded="false" aria-controls="goldChatSettings" class="grid h-8 w-8 place-items-center rounded-lg text-slate-400 transition hover:bg-white/10 hover:text-gold">
+        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="m19.4 15 .1.1a1.7 1.7 0 0 1-2.4 2.4l-.1-.1a1.7 1.7 0 0 0-2.9 1.2v.2a1.7 1.7 0 0 1-3.4 0v-.2a1.7 1.7 0 0 0-2.9-1.2l-.1.1a1.7 1.7 0 0 1-2.4-2.4l.1-.1a1.7 1.7 0 0 0-1.2-2.9H4a1.7 1.7 0 0 1 0-3.4h.2a1.7 1.7 0 0 0 1.2-2.9l-.1-.1a1.7 1.7 0 0 1 2.4-2.4l.1.1a1.7 1.7 0 0 0 2.9-1.2V2a1.7 1.7 0 0 1 3.4 0v.2a1.7 1.7 0 0 0 2.9 1.2l.1-.1a1.7 1.7 0 0 1 2.4 2.4l-.1.1a1.7 1.7 0 0 0 1.2 2.9h.2a1.7 1.7 0 0 1 0 3.4h-.2a1.7 1.7 0 0 0-1.2 2.9Z"/></svg>
+      </button>
+      <button id="goldChatClose" type="button" aria-label="ปิดแชท" class="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-slate-400 transition hover:bg-white/10 hover:text-white">
+        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m18 6-12 12M6 6l12 12"/></svg>
+      </button>
+      </div>
+    </header>
+    <section id="goldChatSettings" class="hidden space-y-2.5 border-b border-white/5 bg-ink-900/70 p-3" aria-label="ตั้งค่า Google Gemini">
+      <div>
+        <label for="goldChatModel" class="mb-1 block text-[10px] font-medium text-slate-400">Gemini model</label>
+        <select id="goldChatModel" class="w-full rounded-lg border border-white/10 bg-ink-800 px-2.5 py-2 text-xs text-white outline-none focus:border-gold/50">
+          <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+          <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+          <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash-Lite</option>
+          <option value="gemini-3-flash-preview">Gemini 3 Flash Preview</option>
+          <option value="gemini-3.1-flash-lite-preview">Gemini 3.1 Flash Lite Preview</option>
+          <option value="gemini-3.1-flash-lite">Gemini 3.1 Flash Lite</option>
+          <option value="gemini-3.5-flash">Gemini 3.5 Flash</option>
+          <option value="gemini-3.5-flash-lite" selected>Gemini 3.5 Flash Lite</option>
+          <option value="gemini-3.6-flash">Gemini 3.6 Flash</option>
+          <option value="gemini-3.7-flash">Gemini 3.7 Flash</option>
+          <option value="gemini-3.8-flash">Gemini 3.8 Flash</option>
+        </select>
+      </div>
+      <div>
+        <div class="mb-1 flex items-center justify-between gap-2">
+          <label for="goldChatApiKey" class="block text-[10px] font-medium text-slate-400">Google AI Studio API key</label>
+          <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-[10px] font-medium text-gold-light underline decoration-gold/40 underline-offset-2 hover:text-white">รับ API key
+            <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3h7v7M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
+          </a>
+        </div>
+        <div class="flex gap-1.5">
+          <input id="goldChatApiKey" type="password" autocomplete="off" spellcheck="false" placeholder="วาง Gemini API key" class="min-w-0 flex-1 rounded-lg border border-white/10 bg-ink-800 px-2.5 py-2 text-xs text-white placeholder:text-slate-600 outline-none focus:border-gold/50" />
+          <button id="goldChatRevealKey" type="button" aria-label="แสดง API key" class="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-white/10 text-slate-400 hover:text-white">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+      <label class="flex cursor-pointer items-start gap-2 text-[10px] leading-relaxed text-slate-400">
+        <input id="goldChatIncludePrivate" type="checkbox" class="mt-0.5 accent-amber-400" />
+        <span>แนบข้อมูลพอร์ต/บันทึกซื้อขาย/การแจ้งเตือน (อาจมีข้อมูลส่วนตัว)</span>
+      </label>
+      <div class="flex flex-wrap items-center gap-1.5">
+        <button id="goldChatSaveKey" type="button" class="rounded-lg bg-gold px-3 py-2 text-[10px] font-semibold text-ink-900 hover:brightness-110">บันทึกในเครื่องนี้</button>
+        <button id="goldChatTestKey" type="button" class="rounded-lg border border-white/10 px-3 py-2 text-[10px] text-slate-300 hover:border-sky-400/40 hover:text-sky-300">ทดสอบการเชื่อมต่อ</button>
+        <button id="goldChatClearKey" type="button" class="rounded-lg border border-white/10 px-3 py-2 text-[10px] text-slate-400 hover:text-rose-300">ลบ key</button>
+      </div>
+      <p id="goldChatSettingsStatus" class="text-[10px] text-slate-500">ยังไม่ตั้งค่า · ใช้คำตอบ rule-based ในเครื่อง</p>
+      <p class="text-[9px] leading-relaxed text-amber-200/70">Key และโมเดลเก็บใน localStorage ของ browser จนกดลบ และส่งตรงไป Google เมื่อเรียก Gemini · ผู้ใช้เครื่องนี้เปิดดู key ได้ ไม่ควรบันทึกบนเครื่องสาธารณะ · โมเดล/โควตาอาจไม่เปิดให้ทุกบัญชี</p>
+    </section>
+    <div class="border-b border-white/5 px-3 py-2.5">
+      <div class="mb-2 text-[10px] text-slate-500">ถามเรื่องราคาปัจจุบันและความเสี่ยง</div>
+      <div class="flex flex-wrap gap-1.5">
+        <button type="button" class="gold-chat-prompt rounded-full border border-white/10 px-2.5 py-1 text-[10px] text-slate-300 transition hover:border-gold/40 hover:text-gold" data-prompt="วันนี้ควรซื้อไหม?">วันนี้ควรซื้อไหม?</button>
+        <button type="button" class="gold-chat-prompt rounded-full border border-white/10 px-2.5 py-1 text-[10px] text-slate-300 transition hover:border-gold/40 hover:text-gold" data-prompt="ประเมินความเสี่ยงให้หน่อย">ประเมินความเสี่ยง</button>
+        <button type="button" class="gold-chat-prompt rounded-full border border-white/10 px-2.5 py-1 text-[10px] text-slate-300 transition hover:border-gold/40 hover:text-gold" data-prompt="วิเคราะห์แนวโน้มทองคำ">วิเคราะห์แนวโน้ม</button>
+      </div>
+    </div>
+    <div id="goldChatMessages" class="chat-scroll min-h-0 flex-1 space-y-3 overflow-y-auto px-3 py-3" role="log" aria-live="polite" aria-relevant="additions">
+      <div class="chat-bubble max-w-[92%] rounded-2xl rounded-tl-md border border-white/5 bg-white/5 px-3 py-2.5 text-xs leading-relaxed text-slate-300">สวัสดีครับ ผมช่วยอ่านราคาสมาคม, RSI, Fear &amp; Greed และแนวรับ/แนวต้านบนหน้านี้ได้ คำตอบเป็นข้อมูลประกอบ ไม่ใช่คำแนะนำลงทุนเฉพาะบุคคล</div>
+    </div>
+    <form id="goldChatForm" class="flex items-end gap-2 border-t border-white/5 bg-ink-900/70 p-3">
+      <label for="goldChatInput" class="sr-only">พิมพ์คำถาม</label>
+      <textarea id="goldChatInput" rows="1" maxlength="600" placeholder="ถามเกี่ยวกับทองคำ..." class="max-h-24 min-h-10 flex-1 resize-none rounded-xl border border-white/10 bg-ink-800 px-3 py-2.5 text-xs leading-relaxed text-white placeholder:text-slate-500 outline-none transition focus:border-gold/50" ></textarea>
+      <button type="submit" aria-label="ส่งข้อความ" class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-b from-gold-light to-gold text-ink-900 shadow-glow transition hover:brightness-110 disabled:opacity-50">
+        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+      </button>
+    </form>
+    <div id="goldChatPrivacyNote" class="px-3 pb-2 text-[9px] text-slate-600">ใช้คำตอบ rule-based ในอุปกรณ์นี้ · ไม่ส่งข้อความไปบริการ AI ภายนอก</div>
+  </section>
+  <button id="goldChatToggle" type="button" aria-label="เปิด Gold Smart AI Assistant" aria-expanded="false" aria-controls="goldChatPanel" class="group flex h-14 items-center gap-2.5 rounded-full border border-gold/40 bg-gradient-to-br from-gold-light via-gold to-gold-dark px-4 text-ink-900 shadow-[0_10px_35px_-10px_rgba(212,175,55,.65)] transition hover:brightness-110 active:scale-95 sm:h-14">
+    <svg id="goldChatToggleIcon" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 9 9 0 0 1-4-.9L3 21l1.9-5.5a9 9 0 0 1-.9-4A8.5 8.5 0 0 1 12.5 3h.5a8.5 8.5 0 0 1 8 8v.5Z"/><path d="M8 12h.01M12 12h.01M16 12h.01"/></svg>
+    <span class="text-xs font-semibold">ถาม Gold AI</span>
+  </button>
+</div>
+
+<div id="goldChatMessageMenu" class="chat-context-menu card hidden overflow-hidden rounded-xl border border-white/10 p-1.5 shadow-xl shadow-black/50" role="menu" aria-label="จัดการข้อความแชท">
+  <button type="button" data-chat-action="copy" role="menuitem" class="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs text-slate-200 transition hover:bg-white/10">
+    <svg class="h-3.5 w-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></svg>
+    <span>คัดลอกข้อความ</span>
+  </button>
+  <button type="button" data-chat-action="delete" role="menuitem" class="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs text-rose-300 transition hover:bg-rose-500/10">
+    <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2m3 0-.9 14H5.9L5 6m4 4v6m6-6v6"/></svg>
+    <span>ลบข้อความ</span>
+  </button>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
 /* =========================================================
@@ -1006,6 +1112,11 @@ const GOLDTRADERS_LATEST = 'https://goldtraders.or.th/api/GoldPrices/Latest?read
 const GOLDTRADERS_OHLC = 'https://goldtraders.or.th/api/GoldPrices/ohlc?readjson=true';
 const ALL_ORIGINS = 'https://api.allorigins.win/get?url=';
 const JINA_PROXY = 'https://r.jina.ai/http://';
+const GEMINI_KEY_STORAGE_KEY = 'goldsignal_gemini_api_key_v1';
+const GEMINI_MODEL_STORAGE_KEY = 'goldsignal_gemini_model_v1';
+const GEMINI_DEFAULT_MODEL = 'gemini-3.5-flash-lite';
+const GEMINI_PRIVATE_CONTEXT_SESSION_KEY = 'goldsignal_gemini_private_context_session_v1';
+const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models/';
 
 /* Thai Gold API สำรอง หาก proxy หรือบริการสมาคมไม่พร้อมใช้งาน */
 const ENDPOINTS = [
@@ -1052,6 +1163,7 @@ const state = {
   officialOhlc: [],
   officialOhlcUpdated: 0,
   officialOhlcLoading: false,
+  goldChatTurns: [],
 
   /* บันทึกการซื้อขาย */
   trades: []
@@ -1282,6 +1394,501 @@ function renderRiskMatrix() {
   $('riskMatrixRatio').textContent = '1 : ' + fmt2((tp1 - entry) / risk);
   $('riskMatrixNote').textContent = 'อิงแนวรับ ' + fmt0(a.support) + ' / แนวต้าน ' + fmt0(a.resistance) +
     ' และความผันผวนล่าสุด' + (state.source === 'mock' ? ' · ข้อมูลราคาปัจจุบันเป็นข้อมูลจำลอง' : '') + ' · ระดับราคาเป็นค่าประมาณ ไม่รับประกันผล';
+}
+
+function getGoldAssistantContext() {
+  const analysis = state.analysis;
+  const observations = state.history.filter(point => !point.seed).length;
+  const sentimentScore = analysis && analysis.rsi != null && observations >= CFG.RSI_PERIOD + 1
+    ? Math.round(clamp(50 + (analysis.rsi - 50) * 0.75 - clamp((analysis.vol / 0.6) * 24, 0, 24), 0, 100))
+    : null;
+  const entry = toNumber($('riskEntry').value) || toNumber($('calcBuyPrice').value) || toNumber($('beBuyPrice').value);
+  let riskPlan = null;
+  if (entry > 0 && analysis && observations >= CFG.RSI_PERIOD + 1) {
+    const riskDistance = Math.max(entry * Math.max(analysis.vol / 100 * 1.5, 0.005), entry * 0.005);
+    const tp1 = analysis.resistance > entry ? analysis.resistance : entry + riskDistance;
+    const tp2 = Math.max(tp1 + riskDistance, entry + riskDistance * 2);
+    const stop = analysis.support < entry ? Math.min(analysis.support * 0.998, entry - entry * 0.005) : entry - riskDistance;
+    riskPlan = { entry, tp1, tp2, stop, ratio: (tp1 - entry) / Math.max(entry - stop, 1) };
+  }
+  const closes = state.officialOhlc.map(point => point.price).filter(price => Number.isFinite(price) && price > 0);
+  const recent = closes.slice(-6);
+  const trendPct = recent.length > 1 ? ((recent[recent.length - 1] - recent[0]) / recent[0]) * 100 : null;
+  const currentPrice = state.data && state.data.barSell;
+  const spread = state.data && state.data.barSell - state.data.barBuy;
+  return {
+    source: state.source,
+    sourceLabel: $('sourceLabel').textContent,
+    announcement: $('announcementInfo').textContent,
+    currentPrice,
+    barBuy: state.data && state.data.barBuy,
+    ornBuy: state.data && state.data.ornBuy,
+    ornSell: state.data && state.data.ornSell,
+    ylgBuy: state.ylgQuote && state.ylgQuote.buy,
+    ylgSell: state.ylgQuote && state.ylgQuote.sell,
+    spot: state.macro.xau,
+    usdthb: state.macro.usdthb,
+    fair: state.macro.fair,
+    premiumBaht: state.macro.premiumBaht,
+    premiumPct: state.macro.premiumPct,
+    spread,
+    analysis,
+    observations,
+    sentimentScore,
+    riskPlan,
+    trendPct,
+    historyBars: state.officialOhlc.length,
+    quoteTime: state.lastUpdated
+  };
+}
+
+function goldAssistantMarketSummary(context) {
+  const lines = [];
+  if (context.currentPrice != null) lines.push('ทองแท่งสมาคมขายออก ' + fmt0(context.currentPrice) + ' บาท · รับซื้อ ' + fmt0(context.barBuy) + ' บาท');
+  if (context.spot != null) lines.push('Spot $' + fmt2(context.spot) + (context.usdthb != null ? ' · USD/THB ' + fmt2(context.usdthb) : ''));
+  if (context.analysis && context.analysis.rsi != null) lines.push('RSI ' + fmt2(context.analysis.rsi) + ' · แนวรับ ' + fmt0(context.analysis.support) + ' · แนวต้าน ' + fmt0(context.analysis.resistance));
+  if (context.sentimentScore != null) lines.push('Fear & Greed ' + context.sentimentScore + '/100');
+  return lines.length ? lines.join('\n') : 'ยังโหลดข้อมูลตลาดไม่ครบ ลองถามอีกครั้งหลังราคาอัปเดต';
+}
+
+function selectedGeminiModel() {
+  return $('goldChatModel').value || GEMINI_DEFAULT_MODEL;
+}
+
+function getGeminiWebsiteContext() {
+  const c = getGoldAssistantContext();
+  const includePrivate = $('goldChatIncludePrivate').checked;
+  const currentTime = Date.now();
+  const historical = state.officialOhlc;
+  const yearly = new Map();
+  historical.forEach(point => {
+    const year = new Date(point.t).getFullYear();
+    const item = yearly.get(year) || { year, bars: 0, first: point.price, last: point.price, low: Infinity, high: -Infinity };
+    item.bars++;
+    item.last = point.price;
+    item.low = Math.min(item.low, point.low);
+    item.high = Math.max(item.high, point.high);
+    yearly.set(year, item);
+  });
+  const rangeStart = state.range ? currentTime - state.range : 0;
+  const selectedBars = historical.filter(point => point.t >= rangeStart).slice(-120).map(point => ({
+    time: new Date(point.t).toISOString(), open: point.open, high: point.high, low: point.low, close: point.price
+  }));
+  const analysis = c.analysis;
+  const forecast = state.forecast || buildForecast();
+  const context = {
+    generatedAt: new Date(currentTime).toISOString(),
+    note: 'นี่คือ snapshot ข้อมูลที่เว็บไซต์โหลดไว้ ไม่ใช่ข้อมูลไร้ขีดจำกัด; historical OHLC แนบแท่งล่าสุดในช่วงที่เลือกสูงสุด 120 แท่งและสรุปตลอดปีทั้งหมด',
+    source: { status: c.sourceLabel, announcement: c.announcement, quoteUpdatedAt: c.quoteTime ? new Date(c.quoteTime).toISOString() : null },
+    pricesTHBPerBahtWeight: {
+      association: { barBuy: c.barBuy, barSell: c.currentPrice, ornamentBuy: c.ornBuy, ornamentSell: c.ornSell, barSpread: c.spread },
+      ylgQuote: c.ylgBuy == null ? null : { buy: c.ylgBuy, sell: c.ylgSell, updated: state.ylgQuote && state.ylgQuote.updated }
+    },
+    globalMarket: {
+      goldSpotXauUsd: c.spot, usdThb: c.usdthb, fairPrice: c.fair,
+      associationPremiumBaht: c.premiumBaht, associationPremiumPct: c.premiumPct,
+      usdThbChange1dPct: state.macro.chg1, usdThbChange7dPct: state.macro.chg7, usdThbChange30dPct: state.macro.chg30
+    },
+    technical: analysis ? {
+      rsi14: analysis.rsi, volatilityPctPerObservation: analysis.vol,
+      fearGreedScore: c.sentimentScore, fearGreedLabel: $('sentimentLabel').textContent,
+      sma5: analysis.smaFast, sma20: analysis.smaSlow, support: analysis.support, resistance: analysis.resistance,
+      signal: analysis.signal.label, confidencePct: analysis.confidence, reasons: analysis.reasons
+    } : null,
+    chartHistory: {
+      officialBarsAvailable: historical.length,
+      firstBarAt: historical.length ? new Date(historical[0].t).toISOString() : null,
+      latestBarAt: historical.length ? new Date(historical[historical.length - 1].t).toISOString() : null,
+      rangeMs: state.range,
+      yearlySummaries: [...yearly.values()],
+      recentSelectedBars: selectedBars
+    },
+    forecast: forecast ? {
+      days: forecast.days.map(day => ({ date: dateKey(day.date), price: Math.round(day.price), low: Math.round(day.low), high: Math.round(day.high), changePct: day.changePct, probabilityUpPct: day.pUp })),
+      trendUp: forecast.up, trendProbabilityPct: forecast.trendProb, syntheticDailyDataPresent: forecast.hasSynthetic
+    } : null,
+    calculatorInputs: {
+      riskEntry: toNumber($('riskEntry').value), riskTp1: $('riskTp1').textContent,
+      riskTp2: $('riskTp2').textContent, riskStopLoss: $('riskSl').textContent,
+      profitCalculatorEntry: toNumber($('calcBuyPrice').value), breakEvenEntry: toNumber($('beBuyPrice').value)
+    },
+    methodology: 'Fair Price ต่อหนึ่งบาททองคำนวณจาก Spot × 0.965 × 15.244 ÷ 31.1035 × USD/THB. ราคาเป็นข้อมูลอ้างอิง ไม่ใช่ราคาซื้อขายรับประกัน.'
+  };
+  if (includePrivate) {
+    context.privateUserData = {
+      trades: state.trades,
+      alerts: state.alerts.map(alert => ({ side: alert.side, product: alert.product, condition: alert.condition, target: alert.target, active: alert.active })),
+      calculatorInputs: {
+        profitWeight: toNumber($('calcWeight').value), breakEvenWeight: toNumber($('beWeight').value),
+        breakEvenFee: toNumber($('beFee').value), journalNote: $('jNote').value
+      }
+    };
+  }
+  return context;
+}
+
+function geminiContents(question) {
+  const turns = state.goldChatTurns.slice(-12).map(turn => ({
+    role: turn.role,
+    parts: [{ text: turn.text }]
+  }));
+  turns.push({ role: 'user', parts: [{ text: 'ข้อมูลปัจจุบันจากเว็บไซต์ (JSON):\n' + JSON.stringify(getGeminiWebsiteContext()) + '\n\nคำถาม: ' + question }] });
+  return turns;
+}
+
+async function callGemini(contents, apiKey, model, maxOutputTokens) {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), 30000);
+  try {
+    const response = await fetch(GEMINI_API_BASE + encodeURIComponent(model) + ':generateContent', {
+      method: 'POST',
+      signal: controller.signal,
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: 'คุณคือ Gold Smart AI Assistant บนเว็บไซต์เช็คราคาทองไทย ตอบภาษาไทย กระชับ และใช้เฉพาะข้อมูลเว็บไซต์ใน prompt หากไม่มีให้บอกว่าไม่มี ห้ามสร้างราคาหรือสถิติเอง วิเคราะห์ความเสี่ยงอย่างสมดุล ไม่ฟันธงว่าควรซื้อ/ขาย และย้ำว่าไม่ใช่คำแนะนำการลงทุนเฉพาะบุคคล ประวัติ OHLC ที่แนบเป็นข้อมูลบางส่วนล่าสุดพร้อมสรุปรายปี ไม่ใช่ข้อมูล unlimited.' }] },
+        contents,
+        generationConfig: { temperature: 0.35, maxOutputTokens: maxOutputTokens || 1600 }
+      })
+    });
+    const payload = await response.json();
+    if (!response.ok) {
+      const reason = payload && payload.error && payload.error.message ? payload.error.message : 'HTTP ' + response.status;
+      throw new Error(String(reason).replaceAll(apiKey, '[API key]').slice(0, 240));
+    }
+    const answer = payload.candidates && payload.candidates[0] && payload.candidates[0].content && payload.candidates[0].content.parts
+      ? payload.candidates[0].content.parts.map(part => part.text || '').join('').trim()
+      : '';
+    if (!answer) throw new Error('Gemini ไม่ได้ส่งข้อความคำตอบกลับมา');
+    return answer;
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
+
+function updateGeminiSettingsStatus(message, tone) {
+  const status = $('goldChatSettingsStatus');
+  status.textContent = message;
+  status.className = 'text-[10px] ' + (tone === 'success' ? 'text-emerald-300' : tone === 'error' ? 'text-rose-300' : 'text-slate-500');
+}
+
+function syncGeminiModeUI() {
+  const hasKey = Boolean(localStorage.getItem(GEMINI_KEY_STORAGE_KEY));
+  const modelName = $('goldChatModel').selectedOptions[0].textContent;
+  $('goldChatPrivacyNote').textContent = hasKey
+    ? 'Gemini ' + modelName + ' · ข้อมูลปัจจุบันส่งตรงไป Google เมื่อถาม'
+    : 'ใช้คำตอบ rule-based ในอุปกรณ์นี้ · ไม่ส่งข้อความไปบริการ AI ภายนอก';
+  if (!hasKey) updateGeminiSettingsStatus('ยังไม่ตั้งค่า · ใช้คำตอบ rule-based ในเครื่อง', 'neutral');
+  else updateGeminiSettingsStatus('Gemini พร้อม · API key บันทึกใน localStorage ของ browser นี้', 'success');
+}
+
+function initializeGeminiSettings() {
+  const model = localStorage.getItem(GEMINI_MODEL_STORAGE_KEY) || GEMINI_DEFAULT_MODEL;
+  if ([...$('goldChatModel').options].some(option => option.value === model)) $('goldChatModel').value = model;
+  $('goldChatApiKey').value = localStorage.getItem(GEMINI_KEY_STORAGE_KEY) || '';
+  $('goldChatIncludePrivate').checked = sessionStorage.getItem(GEMINI_PRIVATE_CONTEXT_SESSION_KEY) === 'true';
+  syncGeminiModeUI();
+}
+
+async function sendGoldGeminiMessage(question, bubble) {
+  const apiKey = localStorage.getItem(GEMINI_KEY_STORAGE_KEY);
+  if (!apiKey) {
+    bubble.textContent = answerGoldAssistant(question);
+    state.goldChatTurns.push({ role: 'user', text: question }, { role: 'model', text: bubble.textContent });
+    return;
+  }
+  bubble.textContent = 'กำลังอ่านข้อมูลหน้าเว็บและวิเคราะห์ด้วย Gemini…';
+  try {
+    const answer = await callGemini(geminiContents(question), apiKey, selectedGeminiModel(), 1600);
+    bubble.textContent = answer;
+    state.goldChatTurns.push({ role: 'user', text: question }, { role: 'model', text: answer });
+  } catch (err) {
+    const fallback = answerGoldAssistant(question);
+    bubble.textContent = 'Gemini ใช้งานไม่ได้: ' + (err && err.name === 'AbortError' ? 'หมดเวลารอคำตอบ' : err.message) + '\n\nคำตอบสำรองจากข้อมูลในหน้า:\n' + fallback;
+    state.goldChatTurns.push({ role: 'user', text: question }, { role: 'model', text: fallback });
+  }
+  const host = $('goldChatMessages');
+  host.scrollTop = host.scrollHeight;
+}
+
+function answerGoldAssistant(question) {
+  const text = String(question || '').toLowerCase().replace(/[؟?！!]/g, ' ');
+  const c = getGoldAssistantContext();
+  const a = c.analysis;
+  const sourceWarning = c.source === 'mock'
+    ? '\nหมายเหตุ: ราคาหน้าจอเป็นข้อมูลจำลอง จึงไม่ควรใช้ตัดสินใจลงทุน'
+    : c.source === 'fallback'
+      ? '\nหมายเหตุ: ราคาสมาคมขณะนี้อ่านจาก Thai Gold API สำรอง'
+      : '';
+  const freshness = c.quoteTime ? 'ข้อมูลหน้าเว็บอัปเดต ' + dateTimeLabel(c.quoteTime) + ' · ' + c.announcement : '';
+
+  if (/ค่าบล็อก|ค่ากำเหน็จ|ค่ากำหนด/.test(text)) {
+    return 'ค่าบล็อก/ค่ากำหนดคือค่าใช้จ่ายที่ร้านคิดเพิ่มตอนซื้อทองแท่ง โดยเฉพาะทองที่ผลิตเป็นแท่งหรือมีแบรนด์ ส่วนทองรูปพรรณมักมีค่ากำเหน็จจากงานผลิต ควรถามร้านให้ชัดว่าคิดต่อบาททองหรือรวมทั้งรายการ และรวมค่าใช้จ่ายนี้ในต้นทุนก่อนคำนวณจุดคุ้มทุนครับ';
+  }
+  if (/ทองแท่ง.*รูปพรรณ|รูปพรรณ.*ทองแท่ง|ต่างกันยังไง|แบบไหนดี/.test(text)) {
+    return 'ทองแท่งเหมาะกับการอิงราคาสมาคมและส่วนต่างซื้อขายมักแคบกว่า ส่วนทองรูปพรรณมีค่ากำเหน็จและส่วนต่างรับซื้อ/ขายออกมากกว่า เวลาขายคืนควรเช็กราคารับซื้อและเงื่อนไขของร้าน ไม่เทียบราคาขายออกอย่างเดียวครับ';
+  }
+  if (/ดอย|ติดดอย|ขาดทุน|พอร์ต|cut.?loss|stop.?loss|ตัดขาดทุน|ประเมินความเสี่ยง|เสี่ยง/.test(text)) {
+    if (!c.riskPlan) {
+      return 'ตอนนี้ยังคำนวณแผนเฉพาะต้นทุนไม่ได้ครับ กรอกราคาต้นทุนในช่อง Smart Risk/Reward Matrix ก่อน แล้วถามใหม่ ผมจะอ่าน TP1/TP2/Stop Loss จากแนวรับ-แนวต้านและความผันผวนที่มี' +
+        (a ? '\nข้อมูลล่าสุด: RSI ' + fmt2(a.rsi) + ' · แนวรับ ' + fmt0(a.support) + ' · แนวต้าน ' + fmt0(a.resistance) : '') + sourceWarning;
+    }
+    return 'แผนเทียบต้นทุน ' + fmt0(c.riskPlan.entry) + ' บาท:\n• Stop Loss โดยประมาณ ' + fmt0(c.riskPlan.stop) + ' บาท\n• Take Profit 1 ' + fmt0(c.riskPlan.tp1) + ' บาท · TP2 ' + fmt0(c.riskPlan.tp2) + ' บาท\n• Reward/Risk ถึง TP1 ประมาณ 1:' + fmt2(c.riskPlan.ratio) +
+      '\nหากยังถือขาดทุน อย่าเพิ่มไม้เพียงเพื่อถัวเฉลี่ยโดยไม่มีวงเงินเสี่ยง กำหนดขนาดสถานะจากเงินที่ยอมขาดทุนได้ ÷ (ต้นทุนต่อบาท − จุดตัดขาดทุน) และอาจแบ่งเข้าซื้อ 3 ไม้เท่า ๆ กัน แทนการลงเงินครั้งเดียว ระดับเหล่านี้เป็นการคำนวณ ไม่ได้รับประกันผล' + sourceWarning;
+  }
+  if (/ควรซื้อ|ซื้อวันนี้|ซื้อตอนไหน|จังหวะซื้อ|ซื้อทอง|เข้าซื้อ/.test(text)) {
+    if (!a || c.sentimentScore == null) return 'ยังมีข้อมูลราคาที่สังเกตจริงไม่พอสำหรับ RSI/Fear & Greed ครับ รอข้อมูลสะสมเพิ่มก่อน ผมไม่อยากสรุปจังหวะซื้อจากราคาไม่กี่จุด' + sourceWarning;
+    const lines = ['ข้อมูลตอนนี้: ' + goldAssistantMarketSummary(c)];
+    if (c.sentimentScore > 80) lines.push('คะแนนอยู่โซน Extreme Greed เสี่ยงไล่ราคาหรือซื้อใกล้ยอด ไม่ควรเข้าก้อนเดียว');
+    else if (c.sentimentScore > 60) lines.push('บรรยากาศเอนเอียงไปทาง Greed ควรระวังการไล่ราคา');
+    else if (c.sentimentScore < 25) lines.push('ตลาดอยู่โซนกลัวมาก แต่ความกลัวสูงไม่ได้แปลว่าราคาถึงจุดต่ำสุด');
+    else lines.push('คะแนนยังไม่อยู่โซนโลภจัดหรือกลัวจัด จึงไม่มีสัญญาณจากดัชนีเพียงตัวเดียว');
+    if (c.premiumPct != null) lines.push('ราคาสมาคม ' + (c.premiumPct > 0 ? 'สูงกว่า' : 'ต่ำกว่าหรือใกล้') + ' Fair Price ' + signed(c.premiumPct, 2) + '% (' + signed(c.premiumBaht, 0) + ' บาท)');
+    lines.push('แนวทางลดความเสี่ยง: แบ่งเงินเป็น 3 ไม้ รอราคาย่อลงใกล้แนวรับและตั้งจุดยอมขาดทุนก่อนซื้อ ไม่สามารถยืนยันได้ว่าวันนี้เป็นจุดต่ำสุดครับ');
+    if (freshness) lines.push(freshness);
+    return lines.join('\n') + sourceWarning;
+  }
+  if (/ควรขาย|ขายไหม|ขายตอนไหน|จังหวะขาย|ทำกำไร/.test(text)) {
+    if (!a) return 'ยังไม่มีข้อมูลวิเคราะห์เพียงพอครับ กรุณารอราคาจากแหล่งข้อมูลจริงก่อน';
+    const signals = [];
+    if (a.rsi != null && a.rsi >= 70) signals.push('RSI อยู่โซน Overbought (' + fmt2(a.rsi) + ')');
+    if (c.currentPrice >= a.resistance * 0.994) signals.push('ราคาใกล้แนวต้าน ' + fmt0(a.resistance));
+    if (!signals.length) signals.push('ยังไม่พบสัญญาณชนแนวต้านชัดเจนจาก RSI/แนวต้านชุดนี้');
+    return 'ประเมินจากข้อมูลล่าสุด: ' + signals.join(' · ') + ' ครับ หากมีกำไรอาจทยอยขายบางส่วนใกล้แนวต้านและเลื่อนจุดป้องกันกำไรตามแผน อย่าลืมเทียบกับราคารับซื้อจริง ไม่ใช่ราคาขายออก' + sourceWarning;
+  }
+  if (/แนวโน้ม|กราฟ|แนวรับ|แนวต้าน|rsi|fear.?&.?greed|โลภ|กลัว/.test(text)) {
+    const trend = c.trendPct == null ? 'ประวัติแท่ง OHLC ยังไม่พอเทียบแนวโน้ม' : 'แท่งสมาคม 6 จุดล่าสุดเปลี่ยน ' + signed(c.trendPct, 2) + '%';
+    return 'สรุปแนวโน้มจากข้อมูลบนหน้า:\n' + goldAssistantMarketSummary(c) + '\n' + trend +
+      (c.analysis ? '\nความผันผวน ' + fmt2(c.analysis.vol) + '% ต่อรอบ · ' + c.analysis.signal.label : '') +
+      '\nกราฟเป็นราคาประกาศ/แท่ง OHLC จริง ช่วงสั้นอาจราบได้หากสมาคมยังไม่ประกาศราคาใหม่' + sourceWarning;
+  }
+  if (/spot|ค่าเงิน|บาทอ่อน|บาทแข็ง|usd|premium|fair price/.test(text)) {
+    return 'Gold Spot ' + (c.spot != null ? '$' + fmt2(c.spot) : 'ยังไม่มีข้อมูล') + ' · USD/THB ' + (c.usdthb != null ? fmt2(c.usdthb) : 'ยังไม่มีข้อมูล') +
+      '\nFair Price ' + (c.fair != null ? fmt0(c.fair) + ' บาท/บาททอง' : 'ยังคำนวณไม่ได้') +
+      (c.premiumPct != null ? '\nราคาสมาคมเทียบ Fair Price ' + signed(c.premiumPct, 2) + '% (' + signed(c.premiumBaht, 0) + ' บาท)' : '') + sourceWarning;
+  }
+  if (/สวัสดี|ช่วยอะไร|ทำอะไรได้|hello|hi\b/.test(text)) {
+    return 'ผมช่วยอ่านราคาสมาคม, Spot/ค่าเงิน, RSI, Fear & Greed, แนวรับ/แนวต้าน และคำนวณ TP/SL จากต้นทุนที่กรอกไว้ได้ครับ ลองถามว่า “วันนี้ควรซื้อไหม”, “ประเมินความเสี่ยง” หรือ “วิเคราะห์แนวโน้มทองคำ”';
+  }
+  return 'ผมตอบจากข้อมูลที่หน้าเว็บมีและกฎวิเคราะห์ในเครื่องครับ ลองระบุว่าต้องการถามเรื่อง “ซื้อ”, “ขาย”, “ความเสี่ยง/ขาดทุน”, “แนวโน้ม/กราฟ”, “ค่าเงิน/Spot” หรือ “ค่าบล็อก” เพื่อให้วิเคราะห์ได้ตรงขึ้น' + sourceWarning;
+}
+
+function appendGoldChatMessage(text, role) {
+  const host = $('goldChatMessages');
+  const bubble = document.createElement('div');
+  bubble.dataset.chatRole = role;
+  bubble.className = 'chat-bubble max-w-[92%] whitespace-pre-line rounded-2xl px-3 py-2.5 text-xs leading-relaxed ' +
+    (role === 'user'
+      ? 'ml-auto rounded-tr-md border border-gold/20 bg-gold/10 text-gold-light'
+      : 'rounded-tl-md border border-white/5 bg-white/5 text-slate-300');
+  bubble.textContent = text;
+  host.appendChild(bubble);
+  host.scrollTop = host.scrollHeight;
+  return bubble;
+}
+
+function submitGoldChatMessage(message) {
+  const question = String(message || '').trim();
+  if (!question) return;
+  appendGoldChatMessage(question, 'user');
+  $('goldChatInput').value = '';
+  $('goldChatInput').style.height = 'auto';
+  const responseBubble = appendGoldChatMessage('กำลังวิเคราะห์…', 'assistant');
+  window.setTimeout(() => sendGoldGeminiMessage(question, responseBubble), 120);
+}
+
+function setGoldChatOpen(open) {
+  const panel = $('goldChatPanel');
+  const toggle = $('goldChatToggle');
+  panel.classList.toggle('hidden', !open);
+  panel.classList.toggle('flex', open);
+  panel.setAttribute('aria-hidden', String(!open));
+  toggle.setAttribute('aria-expanded', String(open));
+  toggle.setAttribute('aria-label', open ? 'ปิด Gold Smart AI Assistant' : 'เปิด Gold Smart AI Assistant');
+  if (open) $('goldChatInput').focus();
+}
+
+function hideGoldChatMessageMenu() {
+  const menu = $('goldChatMessageMenu');
+  menu.classList.add('hidden');
+  menu.removeAttribute('data-target');
+  menu._targetBubble = null;
+}
+
+function showGoldChatMessageMenu(bubble, x, y) {
+  const menu = $('goldChatMessageMenu');
+  if (!bubble || !bubble.isConnected) return;
+  menu._targetBubble = bubble;
+  menu.classList.remove('hidden');
+  const width = menu.offsetWidth;
+  const height = menu.offsetHeight;
+  menu.style.left = Math.max(8, Math.min(x, window.innerWidth - width - 8)) + 'px';
+  menu.style.top = Math.max(8, Math.min(y, window.innerHeight - height - 8)) + 'px';
+}
+
+async function copyGoldChatMessage(text) {
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+    } else {
+      const helper = document.createElement('textarea');
+      helper.value = text;
+      helper.setAttribute('readonly', '');
+      helper.style.position = 'fixed';
+      helper.style.opacity = '0';
+      document.body.appendChild(helper);
+      helper.select();
+      const copied = document.execCommand('copy');
+      helper.remove();
+      if (!copied) throw new Error('clipboard unavailable');
+    }
+    pushToast({ title: 'คัดลอกข้อความแล้ว', body: 'คัดลอกข้อความแชทไปยังคลิปบอร์ดแล้ว', tone: 'info' });
+  } catch (err) {
+    pushToast({ title: 'คัดลอกไม่สำเร็จ', body: 'เบราว์เซอร์ไม่อนุญาตให้เข้าถึงคลิปบอร์ด', tone: 'info' });
+  }
+}
+
+function wireGoldAssistant() {
+  $('goldChatToggle').addEventListener('click', () => {
+    setGoldChatOpen($('goldChatPanel').classList.contains('hidden'));
+  });
+  $('goldChatClose').addEventListener('click', () => setGoldChatOpen(false));
+  $('goldChatSettingsToggle').addEventListener('click', () => {
+    const settings = $('goldChatSettings');
+    const open = settings.classList.contains('hidden');
+    settings.classList.toggle('hidden', !open);
+    $('goldChatSettingsToggle').setAttribute('aria-expanded', String(open));
+    if (open) $('goldChatModel').focus();
+  });
+  $('goldChatRevealKey').addEventListener('click', () => {
+    const input = $('goldChatApiKey');
+    const reveal = input.type === 'password';
+    input.type = reveal ? 'text' : 'password';
+    $('goldChatRevealKey').setAttribute('aria-label', reveal ? 'ซ่อน API key' : 'แสดง API key');
+    input.focus();
+  });
+  $('goldChatModel').addEventListener('change', () => {
+    localStorage.setItem(GEMINI_MODEL_STORAGE_KEY, selectedGeminiModel());
+    syncGeminiModeUI();
+  });
+  $('goldChatIncludePrivate').addEventListener('change', event => {
+    sessionStorage.setItem(GEMINI_PRIVATE_CONTEXT_SESSION_KEY, String(event.currentTarget.checked));
+  });
+  $('goldChatSaveKey').addEventListener('click', () => {
+    const apiKey = $('goldChatApiKey').value.trim();
+    if (!apiKey) {
+      localStorage.removeItem(GEMINI_KEY_STORAGE_KEY);
+      syncGeminiModeUI();
+      updateGeminiSettingsStatus('ลบ API key แล้ว · ใช้คำตอบ rule-based ในเครื่อง', 'neutral');
+      return;
+    }
+    localStorage.setItem(GEMINI_KEY_STORAGE_KEY, apiKey);
+    localStorage.setItem(GEMINI_MODEL_STORAGE_KEY, selectedGeminiModel());
+    syncGeminiModeUI();
+    updateGeminiSettingsStatus('บันทึก key ใน localStorage แล้ว · กดทดสอบการเชื่อมต่อ', 'success');
+  });
+  $('goldChatClearKey').addEventListener('click', () => {
+    localStorage.removeItem(GEMINI_KEY_STORAGE_KEY);
+    $('goldChatApiKey').value = '';
+    syncGeminiModeUI();
+  });
+  $('goldChatTestKey').addEventListener('click', async () => {
+    const apiKey = $('goldChatApiKey').value.trim() || localStorage.getItem(GEMINI_KEY_STORAGE_KEY);
+    if (!apiKey) {
+      updateGeminiSettingsStatus('กรอก API key ก่อนทดสอบ', 'error');
+      return;
+    }
+    const button = $('goldChatTestKey');
+    button.disabled = true;
+    button.textContent = 'กำลังทดสอบ…';
+    updateGeminiSettingsStatus('กำลังเชื่อมต่อ Google Gemini…', 'neutral');
+    try {
+      await callGemini([{ role: 'user', parts: [{ text: 'ตอบกลับเพียงคำว่า OK' }] }], apiKey, selectedGeminiModel(), 16);
+      localStorage.setItem(GEMINI_KEY_STORAGE_KEY, apiKey);
+      localStorage.setItem(GEMINI_MODEL_STORAGE_KEY, selectedGeminiModel());
+      $('goldChatApiKey').value = apiKey;
+      syncGeminiModeUI();
+      updateGeminiSettingsStatus('เชื่อมต่อสำเร็จ · ' + selectedGeminiModel(), 'success');
+    } catch (err) {
+      updateGeminiSettingsStatus('เชื่อมต่อไม่สำเร็จ: ' + (err && err.name === 'AbortError' ? 'หมดเวลารอ' : err.message), 'error');
+    } finally {
+      button.disabled = false;
+      button.textContent = 'ทดสอบการเชื่อมต่อ';
+    }
+  });
+  $('goldChatForm').addEventListener('submit', event => {
+    event.preventDefault();
+    submitGoldChatMessage($('goldChatInput').value);
+  });
+  $('goldChatInput').addEventListener('keydown', event => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      setGoldChatOpen(false);
+      $('goldChatToggle').focus();
+      return;
+    }
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      $('goldChatForm').requestSubmit();
+    }
+  });
+  $('goldChatInput').addEventListener('input', event => {
+    event.currentTarget.style.height = 'auto';
+    event.currentTarget.style.height = Math.min(event.currentTarget.scrollHeight, 96) + 'px';
+  });
+  document.querySelectorAll('.gold-chat-prompt').forEach(button => {
+    button.addEventListener('click', () => submitGoldChatMessage(button.dataset.prompt));
+  });
+
+  const host = $('goldChatMessages');
+  const menu = $('goldChatMessageMenu');
+  let pressTimer = 0;
+  let pressOrigin = null;
+  host.addEventListener('contextmenu', event => {
+    const bubble = event.target.closest('.chat-bubble');
+    if (!bubble) return;
+    event.preventDefault();
+    showGoldChatMessageMenu(bubble, event.clientX, event.clientY);
+  });
+  host.addEventListener('pointerdown', event => {
+    const bubble = event.target.closest('.chat-bubble');
+    if (!bubble || event.pointerType === 'mouse') return;
+    pressOrigin = { x: event.clientX, y: event.clientY, bubble };
+    pressTimer = window.setTimeout(() => {
+      if (pressOrigin && pressOrigin.bubble.isConnected) {
+        showGoldChatMessageMenu(pressOrigin.bubble, pressOrigin.x, pressOrigin.y);
+        pressOrigin = null;
+      }
+    }, 550);
+  });
+  const cancelLongPress = event => {
+    if (pressTimer && event && pressOrigin && Math.hypot(event.clientX - pressOrigin.x, event.clientY - pressOrigin.y) > 10) {
+      window.clearTimeout(pressTimer);
+      pressTimer = 0;
+      pressOrigin = null;
+    }
+  };
+  host.addEventListener('pointermove', cancelLongPress);
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(type => host.addEventListener(type, () => {
+    window.clearTimeout(pressTimer);
+    pressTimer = 0;
+    pressOrigin = null;
+  }));
+  menu.addEventListener('click', async event => {
+    const action = event.target.closest('[data-chat-action]');
+    const bubble = menu._targetBubble;
+    if (!action || !bubble || !bubble.isConnected) return;
+    if (action.dataset.chatAction === 'copy') await copyGoldChatMessage(bubble.textContent);
+    else if (action.dataset.chatAction === 'delete') bubble.remove();
+    hideGoldChatMessageMenu();
+  });
+  document.addEventListener('pointerdown', event => {
+    if (!menu.classList.contains('hidden') && !menu.contains(event.target) && !event.target.closest('.chat-bubble')) {
+      hideGoldChatMessageMenu();
+    }
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && !menu.classList.contains('hidden')) hideGoldChatMessageMenu();
+  });
 }
 /* ---------------- Data fetching ---------------- */
 
@@ -3458,6 +4065,7 @@ setInterval(() => {
 /* ---------------- Event wiring ---------------- */
 
 function wireEvents() {
+  wireGoldAssistant();
   $('refreshBtn').addEventListener('click', () => refresh(true));
 
   $('autoRefreshToggle').addEventListener('change', e => {
@@ -3669,6 +4277,7 @@ function boot() {
   initMacroChart();
   initForecastChart();
   wireEvents();
+  initializeGeminiSettings();
   applyAlertFormUI();
   $('soundToggle').checked = state.soundOn;
   $('jDate').value = ymd(new Date());
